@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '../../utils/logger.js';
+import { LLMError } from '../../types/errors.js';
 
 /**
  * Message role in a conversation
@@ -91,7 +92,7 @@ export class AnthropicClient {
     // Use provided API key or fall back to environment variable
     const apiKey = options.apiKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY is required');
+      throw LLMError.apiKeyMissing();
     }
 
     this.client = new Anthropic({ apiKey });
@@ -115,24 +116,28 @@ export class AnthropicClient {
 
     logger.debug(`Sending completion request to ${model}`);
 
-    const response = await this.client.messages.create({
-      model,
-      max_tokens: maxTokens,
-      temperature: options.temperature,
-      system: options.systemPrompt,
-      stop_sequences: options.stopSequences,
-      messages: [{ role: 'user', content: prompt }],
-    });
+    try {
+      const response = await this.client.messages.create({
+        model,
+        max_tokens: maxTokens,
+        temperature: options.temperature,
+        system: options.systemPrompt,
+        stop_sequences: options.stopSequences,
+        messages: [{ role: 'user', content: prompt }],
+      });
 
-    const content = this.extractTextContent(response);
+      const content = this.extractTextContent(response);
 
-    return {
-      content,
-      model: response.model,
-      stopReason: response.stop_reason,
-      inputTokens: response.usage.input_tokens,
-      outputTokens: response.usage.output_tokens,
-    };
+      return {
+        content,
+        model: response.model,
+        stopReason: response.stop_reason,
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+      };
+    } catch (error) {
+      throw this.wrapApiError(error);
+    }
   }
 
   /**
@@ -144,27 +149,31 @@ export class AnthropicClient {
 
     logger.debug(`Sending chat request to ${model} with ${messages.length} messages`);
 
-    const response = await this.client.messages.create({
-      model,
-      max_tokens: maxTokens,
-      temperature: options.temperature,
-      system: options.systemPrompt,
-      stop_sequences: options.stopSequences,
-      messages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-    });
+    try {
+      const response = await this.client.messages.create({
+        model,
+        max_tokens: maxTokens,
+        temperature: options.temperature,
+        system: options.systemPrompt,
+        stop_sequences: options.stopSequences,
+        messages: messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+      });
 
-    const content = this.extractTextContent(response);
+      const content = this.extractTextContent(response);
 
-    return {
-      content,
-      model: response.model,
-      stopReason: response.stop_reason,
-      inputTokens: response.usage.input_tokens,
-      outputTokens: response.usage.output_tokens,
-    };
+      return {
+        content,
+        model: response.model,
+        stopReason: response.stop_reason,
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+      };
+    } catch (error) {
+      throw this.wrapApiError(error);
+    }
   }
 
   /**
@@ -180,40 +189,44 @@ export class AnthropicClient {
 
     logger.debug(`Streaming completion request to ${model}`);
 
-    const stream = this.client.messages.stream({
-      model,
-      max_tokens: maxTokens,
-      temperature: options.temperature,
-      system: options.systemPrompt,
-      stop_sequences: options.stopSequences,
-      messages: [{ role: 'user', content: prompt }],
-    });
+    try {
+      const stream = this.client.messages.stream({
+        model,
+        max_tokens: maxTokens,
+        temperature: options.temperature,
+        system: options.systemPrompt,
+        stop_sequences: options.stopSequences,
+        messages: [{ role: 'user', content: prompt }],
+      });
 
-    for await (const event of stream) {
-      if (event.type === 'message_start') {
-        yield {
-          type: 'message_start',
-          inputTokens: event.message.usage.input_tokens,
-        };
-      } else if (event.type === 'content_block_start') {
-        yield { type: 'content_block_start' };
-      } else if (event.type === 'content_block_delta') {
-        if (event.delta.type === 'text_delta') {
+      for await (const event of stream) {
+        if (event.type === 'message_start') {
           yield {
-            type: 'content_block_delta',
-            text: event.delta.text,
+            type: 'message_start',
+            inputTokens: event.message.usage.input_tokens,
           };
+        } else if (event.type === 'content_block_start') {
+          yield { type: 'content_block_start' };
+        } else if (event.type === 'content_block_delta') {
+          if (event.delta.type === 'text_delta') {
+            yield {
+              type: 'content_block_delta',
+              text: event.delta.text,
+            };
+          }
+        } else if (event.type === 'content_block_stop') {
+          yield { type: 'content_block_stop' };
+        } else if (event.type === 'message_delta') {
+          yield {
+            type: 'message_delta',
+            outputTokens: event.usage.output_tokens,
+          };
+        } else if (event.type === 'message_stop') {
+          yield { type: 'message_stop' };
         }
-      } else if (event.type === 'content_block_stop') {
-        yield { type: 'content_block_stop' };
-      } else if (event.type === 'message_delta') {
-        yield {
-          type: 'message_delta',
-          outputTokens: event.usage.output_tokens,
-        };
-      } else if (event.type === 'message_stop') {
-        yield { type: 'message_stop' };
       }
+    } catch (error) {
+      throw this.wrapApiError(error);
     }
   }
 
@@ -229,43 +242,47 @@ export class AnthropicClient {
 
     logger.debug(`Streaming chat request to ${model} with ${messages.length} messages`);
 
-    const stream = this.client.messages.stream({
-      model,
-      max_tokens: maxTokens,
-      temperature: options.temperature,
-      system: options.systemPrompt,
-      stop_sequences: options.stopSequences,
-      messages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-    });
+    try {
+      const stream = this.client.messages.stream({
+        model,
+        max_tokens: maxTokens,
+        temperature: options.temperature,
+        system: options.systemPrompt,
+        stop_sequences: options.stopSequences,
+        messages: messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+      });
 
-    for await (const event of stream) {
-      if (event.type === 'message_start') {
-        yield {
-          type: 'message_start',
-          inputTokens: event.message.usage.input_tokens,
-        };
-      } else if (event.type === 'content_block_start') {
-        yield { type: 'content_block_start' };
-      } else if (event.type === 'content_block_delta') {
-        if (event.delta.type === 'text_delta') {
+      for await (const event of stream) {
+        if (event.type === 'message_start') {
           yield {
-            type: 'content_block_delta',
-            text: event.delta.text,
+            type: 'message_start',
+            inputTokens: event.message.usage.input_tokens,
           };
+        } else if (event.type === 'content_block_start') {
+          yield { type: 'content_block_start' };
+        } else if (event.type === 'content_block_delta') {
+          if (event.delta.type === 'text_delta') {
+            yield {
+              type: 'content_block_delta',
+              text: event.delta.text,
+            };
+          }
+        } else if (event.type === 'content_block_stop') {
+          yield { type: 'content_block_stop' };
+        } else if (event.type === 'message_delta') {
+          yield {
+            type: 'message_delta',
+            outputTokens: event.usage.output_tokens,
+          };
+        } else if (event.type === 'message_stop') {
+          yield { type: 'message_stop' };
         }
-      } else if (event.type === 'content_block_stop') {
-        yield { type: 'content_block_stop' };
-      } else if (event.type === 'message_delta') {
-        yield {
-          type: 'message_delta',
-          outputTokens: event.usage.output_tokens,
-        };
-      } else if (event.type === 'message_stop') {
-        yield { type: 'message_stop' };
       }
+    } catch (error) {
+      throw this.wrapApiError(error);
     }
   }
 
@@ -297,5 +314,29 @@ export class AnthropicClient {
       (block): block is Anthropic.TextBlock => block.type === 'text'
     );
     return textBlocks.map((block) => block.text).join('');
+  }
+
+  /**
+   * Wrap API errors in LLMError
+   */
+  private wrapApiError(error: unknown): LLMError {
+    if (error instanceof LLMError) {
+      return error;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+
+    // Check for specific error types from Anthropic SDK
+    if (message.includes('rate limit') || message.includes('429')) {
+      return LLMError.rateLimited(undefined, message);
+    }
+    if (message.includes('invalid_api_key') || message.includes('401')) {
+      return LLMError.apiKeyMissing();
+    }
+    if (message.includes('context') || message.includes('too long') || message.includes('token')) {
+      return LLMError.contextTooLong(message);
+    }
+
+    return LLMError.apiError(message);
   }
 }

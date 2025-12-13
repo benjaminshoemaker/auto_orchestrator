@@ -80,7 +80,7 @@ describe('AnthropicClient', () => {
       delete process.env.ANTHROPIC_API_KEY;
 
       try {
-        expect(() => new AnthropicClient()).toThrow('ANTHROPIC_API_KEY is required');
+        expect(() => new AnthropicClient()).toThrow('ANTHROPIC_API_KEY environment variable not set');
       } finally {
         process.env.ANTHROPIC_API_KEY = originalEnv;
       }

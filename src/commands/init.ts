@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { logger } from '../utils/logger.js';
 import { initProjectDir, projectExists } from '../utils/project.js';
+import { slugify } from '../utils/templates.js';
 
 export interface InitOptions {
   dir?: string;
@@ -8,8 +9,11 @@ export interface InitOptions {
 }
 
 export async function initCommand(idea: string, options: InitOptions): Promise<void> {
-  const projectDir = path.resolve(options.dir || process.cwd());
   const projectName = options.name || idea;
+  // If no --dir specified, create a subdirectory with slugified name
+  const projectDir = options.dir
+    ? path.resolve(options.dir)
+    : path.resolve(process.cwd(), slugify(projectName));
 
   logger.info(`Initializing project: ${projectName}`);
   logger.verbose(`Directory: ${projectDir}`);

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as os from 'os';
+import { createTestTempDir } from '../../helpers/temp-dir.js';
 import {
   TaskResultManager,
   isValidTaskResult,
@@ -15,7 +15,7 @@ describe('Task Result Manager', () => {
 
   beforeEach(async () => {
     // Create temp directory for each test
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'task-results-test-'));
+    tempDir = await createTestTempDir('task-results-test-');
     manager = new TaskResultManager(tempDir);
   });
 

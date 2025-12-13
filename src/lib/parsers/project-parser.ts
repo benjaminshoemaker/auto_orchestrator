@@ -193,11 +193,12 @@ export function parseTaskTable(content: string): Task[] {
     (row) =>
       row.length >= 4 &&
       !row[0]?.includes('ID') &&
+      !row[0]?.includes('Task') &&
       !row[0]?.match(/^[-:]+$/)
   );
 
   for (const row of dataRows) {
-    const [id, description, status, depends] = row;
+    const [id, description, status, depends, criteria] = row;
     if (!id || !description) continue;
 
     const task: Task = {
@@ -205,7 +206,7 @@ export function parseTaskTable(content: string): Task[] {
       description: description.trim(),
       status: parseTaskStatus(status || 'pending'),
       depends_on: parseDependencies(depends || ''),
-      acceptance_criteria: [],
+      acceptance_criteria: parseAcceptanceCriteria(criteria || ''),
     };
 
     tasks.push(task);
@@ -216,12 +217,20 @@ export function parseTaskTable(content: string): Task[] {
 
 /**
  * Parse task status from string
+ * Status markers: ⏳ pending, 🔄 in_progress, ✅ complete, ❌ failed, ⏭️ skipped
  */
 function parseTaskStatus(status: string): TaskStatus {
   const normalized = status.toLowerCase().trim();
-  if (normalized.includes('complete') || normalized.includes('✓')) return 'complete';
-  if (normalized.includes('progress') || normalized.includes('🔄')) return 'in_progress';
-  if (normalized.includes('failed') || normalized.includes('✗')) return 'failed';
+  // Check for emoji markers first (these are unique)
+  if (status.includes('✅') || status.includes('✓')) return 'complete';
+  if (status.includes('🔄')) return 'in_progress';
+  if (status.includes('❌') || status.includes('✗')) return 'failed';
+  if (status.includes('⏭️') || status.includes('⏭')) return 'skipped';
+  if (status.includes('⏳')) return 'pending';
+  // Fall back to text matching
+  if (normalized.includes('complete')) return 'complete';
+  if (normalized.includes('progress')) return 'in_progress';
+  if (normalized.includes('failed')) return 'failed';
   if (normalized.includes('skip')) return 'skipped';
   return 'pending';
 }
@@ -232,6 +241,14 @@ function parseTaskStatus(status: string): TaskStatus {
 function parseDependencies(deps: string): string[] {
   if (!deps || deps === '-' || deps === 'none') return [];
   return deps.split(',').map((d) => d.trim()).filter(Boolean);
+}
+
+/**
+ * Parse acceptance criteria from semicolon-separated string
+ */
+function parseAcceptanceCriteria(criteria: string): string[] {
+  if (!criteria || criteria === '-' || criteria === 'none') return [];
+  return criteria.split(';').map((c) => c.trim()).filter(Boolean);
 }
 
 /**

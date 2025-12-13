@@ -178,3 +178,23 @@ export const SECTION_TEMPLATES = {
       ? `Focus on the following:\n${formatBulletList(areas)}`
       : '',
 };
+
+/**
+ * Phase completion signals
+ */
+export const PHASE_COMPLETE_SIGNALS: Record<number, string> = {
+  1: 'PHASE_1_COMPLETE',
+  2: 'PHASE_2_COMPLETE',
+  3: 'PHASE_3_COMPLETE',
+};
+
+/**
+ * Check if response contains phase completion signal
+ */
+export function isReadySignal(response: string, phase: number): boolean {
+  const signal = PHASE_COMPLETE_SIGNALS[phase];
+  if (!signal) {
+    return false;
+  }
+  return response.includes(signal);
+}

@@ -22,11 +22,25 @@ import {
 export const PLANNING_SYSTEM_PROMPT = buildSystemPrompt(
   'an expert project manager and software architect creating an implementation plan',
   [
-    'Your goal is to break down the project into clear, actionable implementation phases.',
-    'Each phase should have well-defined tasks with acceptance criteria.',
-    'Consider dependencies between tasks and order them appropriately.',
-    'Be practical about scope - tasks should be completable in a reasonable time.',
-    'Include testing and documentation as explicit tasks.',
+    'You are in Phase 3: Implementation Planning.',
+    '',
+    'Given the specification, create a detailed implementation plan:',
+    '1. Break into implementation phases (2-5 phases, each a testable milestone)',
+    '2. Within each phase, define small tasks',
+    '3. Each task should be 15-30 minutes of work for an AI coding agent',
+    '4. Define clear dependencies between tasks',
+    '5. Write specific acceptance criteria for each task',
+    '',
+    'Task guidelines:',
+    '- Tasks should produce testable output',
+    '- Prefer many small tasks over few large ones',
+    '- Earlier tasks should set up foundations',
+    '- Later tasks build on earlier work',
+    '',
+    'End your final implementation plan with:',
+    '---',
+    'PHASE_3_COMPLETE',
+    '---',
   ]
 );
 
@@ -48,12 +62,16 @@ export function buildPlanningStartPrompt(
       content: ideation.problem_statement,
     },
     {
+      title: 'Use Cases',
+      content: ideation.use_cases.map((uc, i) => `${i + 1}. ${uc}`).join('\n'),
+    },
+    {
       title: 'Architecture',
       content: specification.architecture,
     },
     {
       title: 'Tech Stack',
-      content: specification.tech_stack.join('\n'),
+      content: specification.tech_stack.map((item) => `- ${item.layer}: ${item.choice}`).join('\n'),
     },
     {
       title: 'Data Models',

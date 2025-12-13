@@ -67,7 +67,7 @@ describe('Project Writer', () => {
 
       expect(output).toContain('| ID | Description | Status | Depends On |');
       expect(output).toContain('| 1.1 |');
-      expect(output).toContain('✓ complete');
+      expect(output).toContain('✅ complete');
     });
 
     it('should write approvals section', () => {
@@ -82,9 +82,40 @@ describe('Project Writer', () => {
       const output = writeProjectMd(sampleDoc);
       const reparsed = parseProjectMd(output);
 
+      // Meta fields
       expect(reparsed.meta.project_name).toBe(sampleDoc.meta.project_name);
+      expect(reparsed.meta.project_id).toBe(sampleDoc.meta.project_id);
       expect(reparsed.meta.version).toBe(sampleDoc.meta.version);
+      expect(reparsed.meta.current_phase).toBe(sampleDoc.meta.current_phase);
+      expect(reparsed.meta.phase_status).toBe(sampleDoc.meta.phase_status);
+
+      // Implementation phases
       expect(reparsed.implementation_phases.length).toBe(sampleDoc.implementation_phases.length);
+
+      // Check first phase and its tasks
+      if (sampleDoc.implementation_phases.length > 0 && reparsed.implementation_phases.length > 0) {
+        const originalPhase = sampleDoc.implementation_phases[0];
+        const reparsedPhase = reparsed.implementation_phases[0];
+
+        expect(reparsedPhase.phase_number).toBe(originalPhase.phase_number);
+        expect(reparsedPhase.name).toBe(originalPhase.name);
+        expect(reparsedPhase.tasks.length).toBe(originalPhase.tasks.length);
+
+        // Check first task details
+        if (originalPhase.tasks.length > 0) {
+          const originalTask = originalPhase.tasks[0];
+          const reparsedTask = reparsedPhase.tasks[0];
+
+          expect(reparsedTask.id).toBe(originalTask.id);
+          expect(reparsedTask.description).toBe(originalTask.description);
+          expect(reparsedTask.status).toBe(originalTask.status);
+          expect(reparsedTask.depends_on).toEqual(originalTask.depends_on);
+          expect(reparsedTask.acceptance_criteria).toEqual(originalTask.acceptance_criteria);
+        }
+      }
+
+      // Approvals
+      expect(reparsed.approvals.length).toBe(sampleDoc.approvals.length);
     });
   });
 

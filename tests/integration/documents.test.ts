@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as os from 'os';
+import { createTestTempDir } from '../helpers/temp-dir.js';
 import { DocumentManager } from '../../src/lib/documents.js';
 import {
   Task,
@@ -16,7 +16,7 @@ describe('DocumentManager Integration', () => {
   let manager: DocumentManager;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'doc-manager-test-'));
+    tempDir = await createTestTempDir('doc-manager-test-');
     manager = new DocumentManager(tempDir);
   });
 

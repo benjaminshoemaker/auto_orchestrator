@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as os from 'os';
+import { createTestTempDir } from '../../helpers/temp-dir.js';
 import {
   findProjectRoot,
   getProjectPaths,
@@ -14,7 +14,7 @@ describe('Project Utilities', () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'orchestrator-test-'));
+    tempDir = await createTestTempDir('orchestrator-test-');
   });
 
   afterEach(async () => {
@@ -61,27 +61,52 @@ describe('Project Utilities', () => {
   });
 
   describe('validateProjectDir', () => {
-    it('should validate directory with PROJECT.md', async () => {
+    it('should validate directory with all required files', async () => {
       await fs.writeFile(path.join(tempDir, 'PROJECT.md'), '# Test');
+      await fs.writeFile(path.join(tempDir, 'CLAUDE.md'), '# Claude');
+      await fs.mkdir(path.join(tempDir, 'tasks'), { recursive: true });
 
       const result = await validateProjectDir(tempDir);
 
       expect(result.valid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+      expect(result.issues).toHaveLength(0);
     });
 
     it('should fail when PROJECT.md is missing', async () => {
+      await fs.writeFile(path.join(tempDir, 'CLAUDE.md'), '# Claude');
+      await fs.mkdir(path.join(tempDir, 'tasks'), { recursive: true });
+
       const result = await validateProjectDir(tempDir);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('PROJECT.md not found');
+      expect(result.issues).toContain('PROJECT.md not found');
+    });
+
+    it('should fail when CLAUDE.md is missing', async () => {
+      await fs.writeFile(path.join(tempDir, 'PROJECT.md'), '# Test');
+      await fs.mkdir(path.join(tempDir, 'tasks'), { recursive: true });
+
+      const result = await validateProjectDir(tempDir);
+
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('CLAUDE.md not found');
+    });
+
+    it('should fail when tasks directory is missing', async () => {
+      await fs.writeFile(path.join(tempDir, 'PROJECT.md'), '# Test');
+      await fs.writeFile(path.join(tempDir, 'CLAUDE.md'), '# Claude');
+
+      const result = await validateProjectDir(tempDir);
+
+      expect(result.valid).toBe(false);
+      expect(result.issues).toContain('tasks directory not found');
     });
 
     it('should fail when directory does not exist', async () => {
       const result = await validateProjectDir('/nonexistent/path');
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('Directory does not exist');
+      expect(result.issues).toContain('Directory does not exist');
     });
 
     it('should fail when path is a file', async () => {
@@ -91,7 +116,7 @@ describe('Project Utilities', () => {
       const result = await validateProjectDir(filePath);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('Path is not a directory');
+      expect(result.issues).toContain('Path is not a directory');
     });
   });
 
@@ -131,6 +156,14 @@ describe('Project Utilities', () => {
 
       expect(content).toContain('current_phase: 1');
       expect(content).toContain('phase_status: "pending"');
+    });
+
+    it('should throw DocumentParseError if PROJECT.md already exists', async () => {
+      // Create existing PROJECT.md
+      await fs.writeFile(path.join(tempDir, 'PROJECT.md'), '# Existing');
+
+      // Should throw when trying to init
+      await expect(initProjectDir(tempDir, 'Test')).rejects.toThrow('Document already exists');
     });
   });
 

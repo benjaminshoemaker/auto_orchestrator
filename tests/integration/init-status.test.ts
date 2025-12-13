@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as os from 'os';
+import { createTestTempDir } from '../helpers/temp-dir.js';
 
 const CLI_PATH = path.resolve(__dirname, '../../src/index.ts');
 
@@ -28,7 +28,7 @@ describe('Init and Status Commands', () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'orchestrator-test-'));
+    tempDir = await createTestTempDir('orchestrator-test-');
   });
 
   afterEach(async () => {

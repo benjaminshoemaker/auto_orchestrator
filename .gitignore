@@ -7,3 +7,4 @@ tasks/prompts/
 coverage/
 *.log
 .DS_Store
+.test-tmp/

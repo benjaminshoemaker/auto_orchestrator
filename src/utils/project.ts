@@ -2,6 +2,7 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
 import { INITIAL_PROJECT_MD, CLAUDE_MD_TEMPLATE, slugify } from './templates.js';
+import { DocumentParseError } from '../types/errors.js';
 
 /**
  * Paths for standard project files
@@ -62,44 +63,72 @@ export function getProjectPaths(projectDir: string): ProjectPaths {
  */
 export async function validateProjectDir(dir: string): Promise<{
   valid: boolean;
-  errors: string[];
+  issues: string[];
 }> {
-  const errors: string[] = [];
+  const issues: string[] = [];
   const paths = getProjectPaths(dir);
 
   // Check if directory exists
   try {
     const stat = await fs.stat(dir);
     if (!stat.isDirectory()) {
-      errors.push('Path is not a directory');
-      return { valid: false, errors };
+      issues.push('Path is not a directory');
+      return { valid: false, issues };
     }
   } catch {
-    errors.push('Directory does not exist');
-    return { valid: false, errors };
+    issues.push('Directory does not exist');
+    return { valid: false, issues };
   }
 
   // Check for PROJECT.md
   try {
     await fs.access(paths.projectMd);
   } catch {
-    errors.push('PROJECT.md not found');
+    issues.push('PROJECT.md not found');
+  }
+
+  // Check for CLAUDE.md
+  try {
+    await fs.access(paths.claudeMd);
+  } catch {
+    issues.push('CLAUDE.md not found');
+  }
+
+  // Check for tasks directory
+  try {
+    await fs.access(paths.tasksDir);
+  } catch {
+    issues.push('tasks directory not found');
   }
 
   return {
-    valid: errors.length === 0,
-    errors,
+    valid: issues.length === 0,
+    issues,
   };
 }
 
 /**
  * Initialize a new project directory
+ * @throws {DocumentParseError} if PROJECT.md already exists
  */
 export async function initProjectDir(
   dir: string,
   projectName: string
 ): Promise<ProjectPaths> {
   const paths = getProjectPaths(dir);
+
+  // Check if PROJECT.md already exists
+  try {
+    await fs.access(paths.projectMd);
+    // If we get here, file exists - throw error
+    throw DocumentParseError.alreadyExists(paths.projectMd);
+  } catch (error) {
+    // If it's our error, re-throw it
+    if (error instanceof DocumentParseError) {
+      throw error;
+    }
+    // Otherwise, file doesn't exist - continue
+  }
 
   // Create directories
   await fs.mkdir(paths.tasksDir, { recursive: true });

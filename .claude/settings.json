@@ -22,7 +22,11 @@
       "Bash(touch:*)",
       "Bash(cp:*)",
       "Bash(mv:*)",
+      "Bash(tree:*)",
       "Bash(rm:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/coding/Projects/"
     ]
   }
 }

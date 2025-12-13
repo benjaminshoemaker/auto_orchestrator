@@ -100,5 +100,10 @@ program
     await configCommand(options);
   });
 
+// If no command provided, show version
+program.action(() => {
+  console.log(`Orchestrator v${VERSION}`);
+});
+
 // Parse command line arguments
 program.parse();
