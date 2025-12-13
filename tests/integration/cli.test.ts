@@ -46,9 +46,11 @@ describe('CLI', () => {
   });
 
   describe('init command', () => {
-    it('should be recognized', () => {
+    it('should be recognized and work', () => {
+      // Note: This test creates files in cwd, the full init tests are in init-status.test.ts
       const result = runCLI('init "test idea"');
-      expect(result.stdout).toContain('not implemented');
+      // Either succeeds or fails due to existing project - both are valid
+      expect(result.stdout).toMatch(/Initializing project|already exists/);
     });
 
     it('should show help', () => {
@@ -68,9 +70,11 @@ describe('CLI', () => {
   });
 
   describe('status command', () => {
-    it('should be recognized', () => {
+    it('should be recognized and work', () => {
+      // Note: The full status tests are in init-status.test.ts
       const result = runCLI('status');
-      expect(result.stdout).toContain('not implemented');
+      // Either shows status or reports not in project
+      expect(result.stdout).toMatch(/Project:|Not in an orchestrator project/);
     });
 
     it('should accept --json flag', () => {
