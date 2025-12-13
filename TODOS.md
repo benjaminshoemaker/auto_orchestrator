@@ -1,0 +1,2 @@
+- [ ] Add a rule to compact more often.
+- [ ] Add a rule to the AGENTS file to clear the context between every step.
