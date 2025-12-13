@@ -368,7 +368,7 @@ export class StateManager {
   /**
    * Reset task to pending for retry
    */
-  retryTask(taskId: string): void {
+  async retryTask(taskId: string): Promise<void> {
     const task = this.getTask(taskId);
     if (!task) {
       throw StateError.taskNotFound(taskId);
@@ -386,8 +386,11 @@ export class StateManager {
     task.failure_reason = undefined;
     task.commit_hash = undefined;
 
-    // Remove task result
+    // Remove task result from memory
     this.taskResults.delete(taskId);
+
+    // Delete task result file from disk
+    await this.documentManager.deleteTaskResult(taskId);
 
     this.dirty = true;
     this.emit('task_retried', { taskId });

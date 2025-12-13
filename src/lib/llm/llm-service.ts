@@ -63,6 +63,7 @@ export interface LLMServiceOptions {
   model?: string;
   maxTurns?: number;
   temperature?: number;
+  onCostUpdate?: (totalCost: number) => void;
 }
 
 /**
@@ -81,6 +82,7 @@ export interface PhaseResult<T> {
 export class LLMService {
   private client: AnthropicClient;
   private options: LLMServiceOptions;
+  private totalCost: number = 0;
 
   constructor(options: LLMServiceOptions = {}) {
     this.client =
@@ -97,6 +99,30 @@ export class LLMService {
    */
   getClient(): AnthropicClient {
     return this.client;
+  }
+
+  /**
+   * Get total cost accumulated across all operations
+   */
+  getTotalCost(): number {
+    return this.totalCost;
+  }
+
+  /**
+   * Reset total cost to zero
+   */
+  resetCost(): void {
+    this.totalCost = 0;
+  }
+
+  /**
+   * Add cost to total and invoke callback if set
+   */
+  private addCost(cost: number): void {
+    this.totalCost += cost;
+    if (this.options.onCostUpdate) {
+      this.options.onCostUpdate(this.totalCost);
+    }
   }
 
   /**
@@ -172,11 +198,13 @@ export class LLMService {
     }
 
     const usage = conversation.getTokenUsage();
+    const cost = conversation.calculateCost();
+    this.addCost(cost);
 
     return {
       content: content as IdeationContent,
       tokensUsed: usage.totalTokens,
-      costUsd: conversation.calculateCost(),
+      costUsd: cost,
       turnCount: usage.turnCount,
     };
   }
@@ -233,11 +261,13 @@ export class LLMService {
     }
 
     const usage = conversation.getTokenUsage();
+    const cost = conversation.calculateCost();
+    this.addCost(cost);
 
     return {
       content: content as SpecificationContent,
       tokensUsed: usage.totalTokens,
-      costUsd: conversation.calculateCost(),
+      costUsd: cost,
       turnCount: usage.turnCount,
     };
   }
@@ -295,11 +325,13 @@ export class LLMService {
     }
 
     const usage = conversation.getTokenUsage();
+    const cost = conversation.calculateCost();
+    this.addCost(cost);
 
     return {
       content: phases,
       tokensUsed: usage.totalTokens,
-      costUsd: conversation.calculateCost(),
+      costUsd: cost,
       turnCount: usage.turnCount,
     };
   }

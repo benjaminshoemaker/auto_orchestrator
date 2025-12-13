@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as os from 'os';
+import { createTestTempDir } from '../../../helpers/temp-dir.js';
 import { PhaseManager } from '../../../../src/lib/state/phase-manager.js';
 import { StateManager } from '../../../../src/lib/state/state-manager.js';
 import { DocumentManager } from '../../../../src/lib/documents.js';
@@ -15,7 +15,7 @@ describe('PhaseManager', () => {
   let phaseManager: PhaseManager;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'phase-manager-test-'));
+    tempDir = await createTestTempDir('phase-manager-test-');
     docManager = new DocumentManager(tempDir);
     await docManager.initialize('Test Project', 'A test project');
     stateManager = new StateManager(docManager, tempDir);

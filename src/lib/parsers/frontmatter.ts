@@ -101,13 +101,21 @@ export function serializeFrontmatter<T extends Record<string, unknown>>(
 
 /**
  * Update frontmatter while preserving content
+ * Automatically updates the 'updated' timestamp field
  */
 export function updateFrontmatter<T extends Record<string, unknown>>(
   document: string,
   updates: Partial<T>
 ): string {
   const { data, content } = parseFrontmatter<T>(document);
-  const merged = deepMerge(data as Record<string, unknown>, updates as Record<string, unknown>);
+
+  // Auto-update the 'updated' timestamp
+  const updatesWithTimestamp = {
+    ...updates,
+    updated: new Date().toISOString(),
+  } as Partial<T>;
+
+  const merged = deepMerge(data as Record<string, unknown>, updatesWithTimestamp as Record<string, unknown>);
   return serializeFrontmatter(merged as T, content);
 }
 

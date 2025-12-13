@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as os from 'os';
+import { createTestTempDir } from '../../../helpers/temp-dir.js';
 import { StateManager, StateEvent, StateEventType } from '../../../../src/lib/state/state-manager.js';
 import { DocumentManager } from '../../../../src/lib/documents.js';
 import { ImplementationPhase, Task } from '../../../../src/types/index.js';
@@ -13,7 +13,7 @@ describe('StateManager', () => {
   let stateManager: StateManager;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'state-manager-test-'));
+    tempDir = await createTestTempDir('state-manager-test-');
     docManager = new DocumentManager(tempDir);
     await docManager.initialize('Test Project', 'A test project');
 
@@ -397,7 +397,7 @@ describe('StateManager', () => {
   });
 
   describe('retryTask', () => {
-    it('should reset failed task to pending', () => {
+    it('should reset failed task to pending', async () => {
       // Fail the task first
       const result = createTaskResult('1.1', 'Test');
       result.status = 'failed';
@@ -405,7 +405,7 @@ describe('StateManager', () => {
       stateManager.failTask('1.1', result);
 
       // Retry
-      stateManager.retryTask('1.1');
+      await stateManager.retryTask('1.1');
 
       const task = stateManager.getTask('1.1');
       expect(task?.status).toBe('pending');
@@ -413,23 +413,23 @@ describe('StateManager', () => {
       expect(task?.failure_reason).toBeUndefined();
     });
 
-    it('should delete task result', () => {
+    it('should delete task result', async () => {
       const result = createTaskResult('1.1', 'Test');
       result.status = 'failed';
       stateManager.startTask('1.1');
       stateManager.failTask('1.1', result);
 
-      stateManager.retryTask('1.1');
+      await stateManager.retryTask('1.1');
 
       const stored = stateManager.getTaskResult('1.1');
       expect(stored).toBeNull();
     });
 
-    it('should throw if task not failed', () => {
-      expect(() => stateManager.retryTask('1.1')).toThrow('not in failed state');
+    it('should throw if task not failed', async () => {
+      await expect(stateManager.retryTask('1.1')).rejects.toThrow('not in failed state');
     });
 
-    it('should emit task_retried event', () => {
+    it('should emit task_retried event', async () => {
       const handler = vi.fn();
       stateManager.on('task_retried', handler);
 
@@ -437,7 +437,7 @@ describe('StateManager', () => {
       result.status = 'failed';
       stateManager.startTask('1.1');
       stateManager.failTask('1.1', result);
-      stateManager.retryTask('1.1');
+      await stateManager.retryTask('1.1');
 
       expect(handler).toHaveBeenCalledTimes(1);
     });

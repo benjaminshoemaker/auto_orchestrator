@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as os from 'os';
+import { createTestTempDir } from '../../helpers/temp-dir.js';
 import { ClaudeMdManager, TaskContext } from '../../../src/lib/claude-md.js';
 import { Task, ImplementationPhase, TaskResult } from '../../../src/types/index.js';
 import { createTaskResult } from '../../../src/lib/task-results.js';
@@ -11,7 +11,7 @@ describe('ClaudeMdManager', () => {
   let manager: ClaudeMdManager;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'claude-md-test-'));
+    tempDir = await createTestTempDir('claude-md-test-');
     manager = new ClaudeMdManager(tempDir);
   });
 

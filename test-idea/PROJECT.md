@@ -1,9 +1,9 @@
 ---
 version: 1
-project_id: "test-idea-mj4s8t0i"
+project_id: "test-idea-mj4ut3zc"
 project_name: "test idea"
-created: "2025-12-13T21:02:59.298Z"
-updated: "2025-12-13T21:02:59.298Z"
+created: "2025-12-13T22:14:45.864Z"
+updated: "2025-12-13T22:14:45.864Z"
 current_phase: 1
 current_phase_name: "Idea Refinement"
 phase_status: "pending"

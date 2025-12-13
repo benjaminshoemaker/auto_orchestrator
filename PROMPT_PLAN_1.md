@@ -160,12 +160,12 @@ Write all files with complete content. No placeholders.
 ```
 
 **Verification Checklist**:
-- [ ] `npm run build` completes without errors
-- [ ] `npm run dev` prints "Orchestrator v0.1.0"
-- [ ] `npm test` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run typecheck` passes
-- [ ] Directory structure matches specification
+- [x] `npm run build` completes without errors
+- [x] `npm run dev` prints "Orchestrator v0.1.0"
+- [x] `npm test` passes
+- [x] `npm run lint` passes
+- [x] `npm run typecheck` passes
+- [x] Directory structure matches specification
 
 ---
 
@@ -355,11 +355,11 @@ Write unit tests in tests/unit/types.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] `npm run typecheck` passes
-- [ ] All types exported from src/types/index.ts
-- [ ] Error types exported from src/types/errors.ts
-- [ ] DEFAULT_CONFIG has all fields populated
-- [ ] Tests pass
+- [x] `npm run typecheck` passes
+- [x] All types exported from src/types/index.ts
+- [x] Error types exported from src/types/errors.ts
+- [x] DEFAULT_CONFIG has all fields populated
+- [x] Tests pass
 
 ---
 
@@ -462,11 +462,11 @@ Write tests in tests/integration/cli.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] `npm run dev -- --help` shows all 7 commands with descriptions
-- [ ] `npm run dev -- --version` shows 0.1.0
-- [ ] `npm run dev -- init "test"` logs stub message
-- [ ] `npm run dev -- retry 2.3` logs stub message
-- [ ] All tests pass
+- [x] `npm run dev -- --help` shows all 7 commands with descriptions
+- [x] `npm run dev -- --version` shows 0.1.0
+- [x] `npm run dev -- init "test"` logs stub message
+- [x] `npm run dev -- retry 2.3` logs stub message
+- [x] All tests pass
 
 ---
 
@@ -545,12 +545,12 @@ Write tests in tests/unit/utils/templates.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] findProjectRoot traverses up correctly
-- [ ] initProjectDir creates complete structure
-- [ ] validateProjectDir catches all issues
-- [ ] Templates contain valid content
-- [ ] slugify produces valid slugs
-- [ ] All tests pass
+- [x] findProjectRoot traverses up correctly
+- [x] initProjectDir creates complete structure
+- [x] validateProjectDir catches all issues
+- [x] Templates contain valid content
+- [x] slugify produces valid slugs
+- [x] All tests pass
 
 ---
 
@@ -669,12 +669,12 @@ Write integration tests in tests/integration/commands/status.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] `orchestrator init "My idea"` creates project structure
-- [ ] `orchestrator init "My idea" --name custom-name` uses custom name
-- [ ] `orchestrator init` in existing project fails with clear error
-- [ ] `orchestrator status` shows basic project info
-- [ ] `orchestrator status --json` outputs valid JSON
-- [ ] All tests pass
+- [x] `orchestrator init "My idea"` creates project structure
+- [x] `orchestrator init "My idea" --name custom-name` uses custom name
+- [x] `orchestrator init` in existing project fails with clear error
+- [x] `orchestrator status` shows basic project info
+- [x] `orchestrator status --json` outputs valid JSON
+- [x] All tests pass
 
 ---
 
@@ -707,11 +707,11 @@ rm -rf /tmp/test-project
 ```
 
 **Checkpoint Checklist**:
-- [ ] All tests pass (~20 tests)
-- [ ] Project builds without errors
-- [ ] Init creates complete directory structure
-- [ ] PROJECT.md has valid YAML frontmatter
-- [ ] Status command finds and reports project
+- [x] All tests pass (~20 tests)
+- [x] Project builds without errors
+- [x] Init creates complete directory structure
+- [x] PROJECT.md has valid YAML frontmatter
+- [x] Status command finds and reports project
 
 ---
 
@@ -777,12 +777,12 @@ Write tests in tests/unit/lib/parsers/frontmatter.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] Extract handles edge cases correctly
-- [ ] Parse returns typed data
-- [ ] Serialize produces clean YAML
-- [ ] Update preserves body content
-- [ ] Deep merge works correctly
-- [ ] All tests pass
+- [x] Extract handles edge cases correctly
+- [x] Parse returns typed data
+- [x] Serialize produces clean YAML
+- [x] Update preserves body content and auto-updates 'updated' timestamp
+- [x] Deep merge works correctly
+- [x] All tests pass
 
 ---
 
@@ -871,14 +871,14 @@ Create test fixture: tests/fixtures/sample-project.md
 ```
 
 **Verification Checklist**:
-- [ ] Parses YAML meta correctly
-- [ ] Extracts all section content
-- [ ] Parses task tables into Task objects
-- [ ] Status markers convert correctly
-- [ ] Dependencies parsed from comma-separated
-- [ ] Acceptance criteria split correctly
-- [ ] Approvals section parsed
-- [ ] All tests pass
+- [x] Parses YAML meta correctly
+- [x] Extracts all section content
+- [x] Parses task tables into Task objects
+- [x] Status markers convert correctly (uses ✅❌⏳🔄⏭️)
+- [x] Dependencies parsed from comma-separated
+- [x] Acceptance criteria split correctly from semicolon-separated 5th column
+- [x] Approvals section parsed
+- [x] All tests pass
 
 ---
 
@@ -965,12 +965,12 @@ Write tests in tests/unit/lib/writers/project-writer.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] write() produces complete valid PROJECT.md
-- [ ] Round-trip preserves data
-- [ ] updateTask modifies correct row
-- [ ] updateApproval works for add and update
-- [ ] Tables format correctly
-- [ ] All tests pass
+- [x] write() produces complete valid PROJECT.md
+- [x] Round-trip preserves data
+- [x] updateTask modifies correct row
+- [x] updateApproval works for add and update
+- [x] Tables format correctly with emoji status markers
+- [x] All tests pass
 
 ---
 
@@ -1067,13 +1067,13 @@ Write tests in tests/unit/lib/task-results.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] File paths generated correctly
-- [ ] Write creates valid JSON
-- [ ] Read handles missing files
-- [ ] Read validates structure
-- [ ] Delete removes file correctly
-- [ ] Cost calculation correct
-- [ ] All tests pass
+- [x] File paths generated correctly
+- [x] Write creates valid JSON
+- [x] Read handles missing files
+- [x] Read validates structure
+- [x] Delete removes file correctly
+- [x] Cost calculation correct
+- [x] All tests pass
 
 ---
 
@@ -1190,13 +1190,13 @@ Write tests in tests/unit/lib/claude-md.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] exists() works correctly
-- [ ] read() returns file content
-- [ ] initialize() creates valid CLAUDE.md
-- [ ] buildTaskContext() includes all sections
-- [ ] Dependencies formatted correctly
-- [ ] Output format clearly specified
-- [ ] All tests pass
+- [x] exists() works correctly
+- [x] read() returns file content
+- [x] initialize() creates valid CLAUDE.md
+- [x] buildTaskContext() includes all sections
+- [x] Dependencies formatted correctly
+- [x] Output format clearly specified
+- [x] All tests pass
 
 ---
 
@@ -1303,12 +1303,12 @@ Write tests in tests/integration/documents.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] initialize() creates all required files
-- [ ] Read/update operations work correctly
-- [ ] Task results saved, retrieved, deleted
-- [ ] buildTaskPrompt includes all context
-- [ ] validate() catches issues
-- [ ] All tests pass
+- [x] initialize() creates all required files
+- [x] Read/update operations work correctly
+- [x] Task results saved, retrieved, deleted
+- [x] buildTaskPrompt includes all context
+- [x] validate() catches issues
+- [x] All tests pass
 
 ---
 
@@ -1342,11 +1342,11 @@ rm -rf /tmp/doc-test
 ```
 
 **Checkpoint Checklist**:
-- [ ] All tests pass (~55 tests)
-- [ ] PROJECT.md parses correctly
-- [ ] Task tables parse into Task objects
-- [ ] Document updates persist correctly
-- [ ] Round-trip (parse-write-parse) works
+- [x] All tests pass (~55 tests)
+- [x] PROJECT.md parses correctly
+- [x] Task tables parse into Task objects
+- [x] Document updates persist correctly
+- [x] Round-trip (parse-write-parse) works
 
 ---
 
@@ -1519,13 +1519,13 @@ Write tests in tests/unit/lib/state/state-manager.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] load() populates from files
-- [ ] save() persists changes
-- [ ] getNextTask() respects dependencies
-- [ ] retryTask() resets task correctly
-- [ ] All mutations set dirty flag
-- [ ] Events emitted on mutations
-- [ ] All tests pass
+- [x] load() populates from files
+- [x] save() persists changes
+- [x] getNextTask() respects dependencies
+- [x] retryTask() resets task correctly and deletes result file from disk
+- [x] All mutations set dirty flag
+- [x] Events emitted on mutations
+- [x] All tests pass
 
 ---
 
@@ -1617,13 +1617,13 @@ Write tests in tests/unit/lib/state/dependency-resolver.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] validate() finds all issues
-- [ ] canRun() checks dependencies correctly
-- [ ] getBlockingDeps() returns correct blockers
-- [ ] getNextRunnable() respects completion status
-- [ ] getExecutionOrder() produces valid topological order
-- [ ] Cycles detected correctly
-- [ ] All tests pass
+- [x] validate() finds all issues
+- [x] canRun() checks dependencies correctly
+- [x] getBlockingDeps() returns correct blockers
+- [x] getNextRunnable() respects completion status
+- [x] getExecutionOrder() produces valid topological order
+- [x] Cycles detected correctly
+- [x] All tests pass
 
 ---
 
@@ -1744,13 +1744,13 @@ Write tests in tests/unit/lib/state/phase-manager.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] Readiness checklists complete for all phases
-- [ ] isPhaseComplete accurate
-- [ ] canProceedToNextPhase enforces rules
-- [ ] Failed tasks block impl phase completion
-- [ ] Transitions update state correctly
-- [ ] Impl phase advancement works
-- [ ] All tests pass
+- [x] Readiness checklists complete for all phases
+- [x] isPhaseComplete accurate
+- [x] canProceedToNextPhase enforces rules
+- [x] Failed tasks block impl phase completion
+- [x] Transitions update state correctly
+- [x] Impl phase advancement works
+- [x] All tests pass
 
 ---
 
@@ -1785,12 +1785,12 @@ npx tsx test-state.ts
 ```
 
 **Checkpoint Checklist**:
-- [ ] All tests pass (~75 tests)
-- [ ] State loads from files correctly
-- [ ] Dependency resolver validates correctly
-- [ ] Execution order is correct
-- [ ] Phase transitions work
-- [ ] Retry task resets correctly
+- [x] All tests pass (~75 tests)
+- [x] State loads from files correctly
+- [x] Dependency resolver validates correctly
+- [x] Execution order is correct
+- [x] Phase transitions work
+- [x] Retry task resets correctly
 
 ---
 
@@ -1903,13 +1903,13 @@ Write tests in tests/unit/lib/llm/anthropic-client.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] Client initializes with env var or config
-- [ ] complete() returns typed result
-- [ ] chat() handles message history
-- [ ] stream() yields chunks
-- [ ] calculateCost() accurate for models
-- [ ] Errors wrapped in LLMError
-- [ ] All tests pass
+- [x] Client initializes with env var or config (throws LLMError.apiKeyMissing())
+- [x] complete() returns typed result
+- [x] chat() handles message history
+- [x] stream() yields chunks
+- [x] calculateCost() accurate for models
+- [x] Errors wrapped in LLMError via wrapApiError() helper
+- [x] All tests pass
 
 ---
 
@@ -2003,12 +2003,12 @@ Write tests in tests/unit/lib/llm/conversation.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] send() adds turns correctly
-- [ ] Multi-turn preserves history
-- [ ] Token tracking accurate
-- [ ] Cost calculation works
-- [ ] Streaming output works
-- [ ] All tests pass
+- [x] send() adds turns correctly
+- [x] Multi-turn preserves history
+- [x] Token tracking accurate
+- [x] Cost calculation works
+- [x] Streaming output works
+- [x] All tests pass
 
 ---
 
@@ -2204,13 +2204,13 @@ Write tests in tests/unit/lib/llm/prompts/:
 ```
 
 **Verification Checklist**:
-- [ ] Ideation prompt covers all checklist items
-- [ ] Spec prompt requests all technical details
-- [ ] Planning prompt produces parseable tables
-- [ ] Openers include previous phase context
-- [ ] Parsers extract structured data correctly
-- [ ] Ready signals detected correctly
-- [ ] All tests pass
+- [x] Ideation prompt covers all checklist items with PHASE_1_COMPLETE signal
+- [x] Spec prompt requests all technical details with PHASE_2_COMPLETE signal
+- [x] Planning prompt produces parseable output with PHASE_3_COMPLETE signal
+- [x] Openers include previous phase context (planning includes use_cases)
+- [x] Parsers extract structured data correctly
+- [x] Ready signals detected correctly via isReadySignal() function
+- [x] All tests pass
 
 ---
 
@@ -2356,12 +2356,12 @@ Write tests in tests/unit/lib/llm/llm-service.test.ts:
 ```
 
 **Verification Checklist**:
-- [ ] Ideation phase runs conversation loop
-- [ ] Spec phase receives ideation context
-- [ ] Planning phase produces task arrays
-- [ ] Validation builds correct prompt
-- [ ] Cost tracked across all operations
-- [ ] All tests pass
+- [x] Ideation phase uses start/continue/complete methods for flexibility
+- [x] Spec phase receives ideation context
+- [x] Planning phase produces task arrays
+- [x] Validation builds correct prompt
+- [x] Cost tracked across all operations via totalCost, getTotalCost(), and onCostUpdate callback
+- [x] All tests pass
 
 ---
 
@@ -2391,10 +2391,10 @@ ANTHROPIC_API_KEY=your-key npx tsx test-llm.ts
 ```
 
 **Checkpoint Checklist**:
-- [ ] All tests pass (~95 tests)
-- [ ] LLM client connects successfully
-- [ ] Token counts accurate
-- [ ] Cost calculation correct
-- [ ] Prompts produce expected output
+- [x] All tests pass (~95 tests)
+- [x] LLM client connects successfully
+- [x] Token counts accurate
+- [x] Cost calculation correct
+- [x] Prompts produce expected output
 
 ---

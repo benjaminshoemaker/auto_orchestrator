@@ -55,11 +55,28 @@ function parseTechStack(content: string): TechStackItem[] {
 export const SPECIFICATION_SYSTEM_PROMPT = buildSystemPrompt(
   'an expert software architect helping to create a technical specification',
   [
-    'Your goal is to transform the ideation into a concrete technical specification.',
-    'Focus on architecture, technology choices, and data models.',
-    'Consider scalability, maintainability, and best practices.',
-    'Make practical recommendations based on the project requirements.',
-    'Be specific about technology choices and justify your recommendations.',
+    'You are in Phase 2: Specification.',
+    '',
+    'Given the requirements from Phase 1, create a technical specification by determining:',
+    '1. Architecture pattern (monolith, microservices, serverless, etc.)',
+    '2. Tech stack with rationale for each choice',
+    '3. Data models (key entities and relationships)',
+    '4. API contracts (main endpoints)',
+    '5. UI/UX requirements (screens, flows)',
+    '',
+    'Make recommendations based on the requirements. Ask clarifying questions only if critical information is missing.',
+    '',
+    'When complete, output the specification with:',
+    '- Architecture overview',
+    '- Tech stack table',
+    '- Data models',
+    '- API contracts',
+    '- UI/UX requirements',
+    '',
+    'End your final specification with:',
+    '---',
+    'PHASE_2_COMPLETE',
+    '---',
   ]
 );
 

@@ -276,12 +276,13 @@ function buildImplementationPhasesSection(phases: ImplementationPhase[]): string
     }
 
     if (phase.tasks.length > 0) {
-      lines.push('| ID | Description | Status | Depends On |');
-      lines.push('|----|-------------|--------|------------|');
+      lines.push('| ID | Description | Status | Depends On | Acceptance Criteria |');
+      lines.push('|----|-------------|--------|------------|---------------------|');
       for (const task of phase.tasks) {
         const deps = task.depends_on.length > 0 ? task.depends_on.join(', ') : '-';
         const statusDisplay = formatTaskStatus(task.status);
-        lines.push(`| ${task.id} | ${task.description} | ${statusDisplay} | ${deps} |`);
+        const criteria = task.acceptance_criteria.length > 0 ? task.acceptance_criteria.join('; ') : '-';
+        lines.push(`| ${task.id} | ${task.description} | ${statusDisplay} | ${deps} | ${criteria} |`);
       }
       lines.push('');
     }
@@ -293,19 +294,20 @@ function buildImplementationPhasesSection(phases: ImplementationPhase[]): string
 
 /**
  * Format task status for display
+ * Status markers: ⏳ pending, 🔄 in_progress, ✅ complete, ❌ failed, ⏭️ skipped
  */
 function formatTaskStatus(status: Task['status']): string {
   switch (status) {
     case 'complete':
-      return '✓ complete';
+      return '✅ complete';
     case 'in_progress':
       return '🔄 in progress';
     case 'failed':
-      return '✗ failed';
+      return '❌ failed';
     case 'skipped':
-      return 'skipped';
+      return '⏭️ skipped';
     default:
-      return 'pending';
+      return '⏳ pending';
   }
 }
 

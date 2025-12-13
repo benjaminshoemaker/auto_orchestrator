@@ -203,8 +203,11 @@ export class LLMError extends OrchestratorError {
     });
   }
 
-  static apiError(statusCode: number, details: string, requestId?: string): LLMError {
-    return new LLMError(`LLM API error (${statusCode}): ${details}`, {
+  static apiError(details: string, statusCode?: number, requestId?: string): LLMError {
+    const message = statusCode
+      ? `LLM API error (${statusCode}): ${details}`
+      : `LLM API error: ${details}`;
+    return new LLMError(message, {
       type: 'api_error',
       statusCode,
       details,
@@ -212,10 +215,19 @@ export class LLMError extends OrchestratorError {
     });
   }
 
-  static rateLimited(retryAfter?: number): LLMError {
-    return new LLMError('Rate limited by LLM API', {
+  static rateLimited(retryAfter?: number, details?: string): LLMError {
+    const message = details ? `Rate limited by LLM API: ${details}` : 'Rate limited by LLM API';
+    return new LLMError(message, {
       type: 'rate_limited',
+      details,
       retryAfter,
+    });
+  }
+
+  static contextTooLong(details: string): LLMError {
+    return new LLMError(`Context too long: ${details}`, {
+      type: 'context_too_long',
+      details,
     });
   }
 
