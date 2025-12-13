@@ -1,27 +1,29 @@
 {
-  "allowedTools": [
-    "Edit",
-    "Write",
-    "Read",
-    "Grep",
-    "Glob",
-    "LS",
-    "Bash(npm:*)",
-    "Bash(npx:*)",
-    "Bash(node:*)",
-    "Bash(git:*)",
-    "Bash(mkdir:*)",
-    "Bash(cat:*)",
-    "Bash(head:*)",
-    "Bash(tail:*)",
-    "Bash(find:*)",
-    "Bash(ls:*)",
-    "Bash(pwd:*)",
-    "Bash(echo:*)",
-    "Bash(touch:*)",
-    "Bash(cp:*)",
-    "Bash(mv:*)",
-    "Bash(rm:*)"
-  ]
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Write",
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(git:*)",
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(pwd:*)",
+      "Bash(echo:*)",
+      "Bash(touch:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)"
+    ]
+  }
 }
 
