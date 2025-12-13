@@ -94,6 +94,12 @@ export class StateError extends OrchestratorError {
       }
     );
   }
+
+  static invalidState(message: string): StateError {
+    return new StateError(message, {
+      type: 'invalid_state',
+    });
+  }
 }
 
 /**
