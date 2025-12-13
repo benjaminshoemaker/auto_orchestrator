@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import 'dotenv/config';
 import { Command } from 'commander';
 import { VERSION } from './constants.js';
 import { setVerbose } from './utils/logger.js';
