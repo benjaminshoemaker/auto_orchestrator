@@ -248,6 +248,55 @@ Examples:
 
 ---
 
+## Context management between steps
+
+### Starting a new step
+When beginning a new PROMPT_PLAN step, **start a fresh conversation**. Do not carry forward conversation history from previous steps.
+
+Before working on any step, ensure you have loaded:
+1. `AGENTS.md` (this file - guardrails and conventions)
+2. `DEV_SPEC.md` (architecture reference)
+3. The current step's section from `PROMPT_PLAN.md` (the actual task)
+
+Read source files and tests on-demand as needed for the specific step. Do not preload the entire codebase.
+
+### Why clear context between steps?
+- Each step is self-contained with complete instructions
+- Decisions from previous steps exist in the code, not conversation history
+- Stale context causes confusion and wastes tokens
+- The code and tests are the source of truth
+
+### When to preserve context
+**Within a single step**, if tests fail or issues arise, continue in the same conversation to debug. The iteration loop is:
+
+```
+Step N starts (fresh context)
+    → Implement
+    → Test fails
+    → Debug (keep context)
+    → Fix
+    → Test fails again
+    → Debug (keep context)
+    → Fix
+    → Tests pass
+    → Step N complete
+Step N+1 starts (fresh context)
+```
+
+Only clear context when moving to the next step, not while iterating on the current one.
+
+### Resuming work after a break
+When returning to a project after stopping:
+1. Start a fresh conversation
+2. Load AGENTS.md, DEV_SPEC.md
+3. Check PROMPT_PLAN checkboxes to find the current step
+4. Run tests to verify current state
+5. Continue from the first unchecked step
+
+Do not attempt to reconstruct previous conversation context. The checked boxes and passing tests tell you everything you need to know.
+
+---
+
 ## When to ask for human input
 
 Ask the human if any of the following is true:
