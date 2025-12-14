@@ -8,6 +8,7 @@ import type { StateManager } from '../state/state-manager.js';
 import { DependencyResolver } from '../state/dependency-resolver.js';
 import { TaskExecutor, type TaskExecutorOptions, type TaskExecutionEvent } from './task-executor.js';
 import type { TaskContext } from './prompt-builder.js';
+import type { GitWorkflowManager } from '../git/workflow-manager.js';
 import * as terminal from '../ui/terminal.js';
 import { EventEmitter } from 'events';
 
@@ -15,6 +16,7 @@ export interface PhaseExecutorOptions extends TaskExecutorOptions {
   stopOnFailure?: boolean;
   parallel?: boolean;
   maxParallel?: number;
+  gitWorkflow?: GitWorkflowManager;
 }
 
 export interface PhaseExecutionEvent {
@@ -44,7 +46,7 @@ export interface PhaseExecutionResult {
  * Executes all tasks in an implementation phase
  */
 export class PhaseExecutor extends EventEmitter {
-  private options: Required<PhaseExecutorOptions>;
+  private options: Required<Omit<PhaseExecutorOptions, 'gitWorkflow'>> & { gitWorkflow?: GitWorkflowManager };
   private stateManager: StateManager;
   private specification?: SpecificationContent;
   private aborted: boolean = false;
@@ -64,6 +66,7 @@ export class PhaseExecutor extends EventEmitter {
       stopOnFailure: options.stopOnFailure ?? true,
       parallel: options.parallel ?? false,
       maxParallel: options.maxParallel || 2,
+      gitWorkflow: options.gitWorkflow,
     };
   }
 
@@ -84,6 +87,17 @@ export class PhaseExecutor extends EventEmitter {
     let completed = 0;
     let failed = 0;
     let skipped = 0;
+
+    // Start phase branch if git workflow is enabled
+    if (this.options.gitWorkflow) {
+      const branchName = await this.options.gitWorkflow.startImplPhase(
+        phase.phase_number,
+        phase.name
+      );
+      if (branchName) {
+        terminal.printInfo(`Created branch: ${branchName}`);
+      }
+    }
 
     this.emitPhaseEvent('phase_start', phase, { completed, total: phase.tasks.length, failed });
 
@@ -220,6 +234,7 @@ export class PhaseExecutor extends EventEmitter {
       validateResults: this.options.validateResults,
       maxRetries: this.options.maxRetries,
       onProgress: this.options.onProgress,
+      gitWorkflow: this.options.gitWorkflow,
     });
 
     // Forward task events

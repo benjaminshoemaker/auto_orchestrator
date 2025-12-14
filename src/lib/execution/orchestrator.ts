@@ -12,6 +12,7 @@ import {
   type PhaseExecutionEvent,
   type PhaseExecutionResult,
 } from './phase-executor.js';
+import type { GitWorkflowManager } from '../git/workflow-manager.js';
 import * as terminal from '../ui/terminal.js';
 import { EventEmitter } from 'events';
 
@@ -47,7 +48,7 @@ export interface OrchestratorResult {
  * Orchestrates the execution of all implementation phases
  */
 export class Orchestrator extends EventEmitter {
-  private options: Required<OrchestratorOptions>;
+  private options: Required<Omit<OrchestratorOptions, 'gitWorkflow'>> & { gitWorkflow?: GitWorkflowManager };
   private stateManager: StateManager;
   private documentManager: DocumentManager;
   private aborted: boolean = false;
@@ -73,6 +74,7 @@ export class Orchestrator extends EventEmitter {
       startPhase: options.startPhase || 1,
       endPhase: options.endPhase || Infinity,
       confirmBeforePhase: options.confirmBeforePhase ?? false,
+      gitWorkflow: options.gitWorkflow,
     };
   }
 
@@ -125,6 +127,7 @@ export class Orchestrator extends EventEmitter {
       stopOnFailure: this.options.stopOnFailure,
       parallel: this.options.parallel,
       maxParallel: this.options.maxParallel,
+      gitWorkflow: this.options.gitWorkflow,
     });
 
     // Set specification context
