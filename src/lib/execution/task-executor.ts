@@ -17,6 +17,7 @@ import {
   toTaskResult,
   type ParsedTaskResult,
 } from './result-parser.js';
+import type { GitWorkflowManager } from '../git/workflow-manager.js';
 import * as terminal from '../ui/terminal.js';
 import { EventEmitter } from 'events';
 
@@ -26,6 +27,7 @@ export interface TaskExecutorOptions {
   validateResults?: boolean;
   maxRetries?: number;
   onProgress?: (chunk: string) => void;
+  gitWorkflow?: GitWorkflowManager;
 }
 
 export interface TaskExecutionEvent {
@@ -40,7 +42,7 @@ export interface TaskExecutionEvent {
  */
 export class TaskExecutor extends EventEmitter {
   private adapter: ClaudeAdapter;
-  private options: Required<TaskExecutorOptions>;
+  private options: Required<Omit<TaskExecutorOptions, 'gitWorkflow'>> & { gitWorkflow?: GitWorkflowManager };
 
   constructor(
     private context: TaskContext,
@@ -53,6 +55,7 @@ export class TaskExecutor extends EventEmitter {
       validateResults: options.validateResults ?? true,
       maxRetries: options.maxRetries || 2,
       onProgress: options.onProgress || (() => {}),
+      gitWorkflow: options.gitWorkflow,
     };
 
     this.adapter = new ClaudeAdapter({
@@ -98,6 +101,14 @@ export class TaskExecutor extends EventEmitter {
     if (result.status === 'complete') {
       this.emitEvent('complete', task.id, `Task ${task.id} completed`, result);
       terminal.printSuccess(`Task ${task.id} completed`);
+
+      // Commit if git workflow enabled
+      if (this.options.gitWorkflow) {
+        const commitHash = await this.options.gitWorkflow.commitTask(task.id, result);
+        if (commitHash) {
+          result.commit_hash = commitHash;
+        }
+      }
     } else {
       this.emitEvent('fail', task.id, `Task ${task.id} failed`, result);
       terminal.printError(`Task ${task.id} failed: ${result.output_summary}`);
@@ -161,6 +172,15 @@ export class TaskExecutor extends EventEmitter {
       if (lastResult.status === 'complete') {
         this.emitEvent('complete', task.id, `Task ${task.id} completed`, lastResult);
         terminal.printSuccess(`Task ${task.id} completed`);
+
+        // Commit if git workflow enabled
+        if (this.options.gitWorkflow) {
+          const commitHash = await this.options.gitWorkflow.commitTask(task.id, lastResult);
+          if (commitHash) {
+            lastResult.commit_hash = commitHash;
+          }
+        }
+
         return lastResult;
       }
 

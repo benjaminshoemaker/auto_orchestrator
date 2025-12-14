@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import { logger } from '../utils/logger.js';
 import { findProjectRoot, getProjectPaths } from '../utils/project.js';
+import { GitClient } from '../lib/git/git-client.js';
 
 export interface StatusOptions {
   dir?: string;
@@ -13,6 +14,11 @@ interface BasicStatus {
   hasProjectMd: boolean;
   hasClaudeMd: boolean;
   hasTasksDir: boolean;
+  git?: {
+    isRepo: boolean;
+    branch: string | null;
+    hasChanges: boolean;
+  };
 }
 
 async function getBasicStatus(projectDir: string): Promise<BasicStatus> {
@@ -53,12 +59,27 @@ async function getBasicStatus(projectDir: string): Promise<BasicStatus> {
     // Directory doesn't exist
   }
 
+  // Check Git status
+  let git: BasicStatus['git'];
+  try {
+    const gitClient = new GitClient(projectDir);
+    const isRepo = await gitClient.isRepo();
+    if (isRepo) {
+      const branch = await gitClient.getCurrentBranch();
+      const hasChanges = await gitClient.hasUncommittedChanges();
+      git = { isRepo, branch, hasChanges };
+    }
+  } catch {
+    // Git not available or error
+  }
+
   return {
     projectName,
     projectDir,
     hasProjectMd,
     hasClaudeMd,
     hasTasksDir,
+    git,
   };
 }
 
@@ -93,6 +114,14 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
   logger.log(`  CLAUDE.md: ${status.hasClaudeMd ? '✓' : '✗'}`);
   logger.log(`  tasks/: ${status.hasTasksDir ? '✓' : '✗'}`);
   logger.info('');
+
+  // Show Git status
+  if (status.git?.isRepo) {
+    logger.log('Git:');
+    logger.log(`  Branch: ${status.git.branch || 'unknown'}`);
+    logger.log(`  Status: ${status.git.hasChanges ? 'uncommitted changes' : 'clean'}`);
+    logger.info('');
+  }
 
   // Note: Full status with phase info will be added when we have the parser
   logger.info('Note: Run "orchestrator resume" to continue the project.');
