@@ -4,7 +4,7 @@ import { GitClient } from '../../../../src/lib/git/git-client.js';
 // Mock simple-git
 vi.mock('simple-git', () => {
   return {
-    default: vi.fn().mockReturnValue({
+    simpleGit: vi.fn().mockReturnValue({
       revparse: vi.fn().mockResolvedValue('true'),
       init: vi.fn().mockResolvedValue(undefined),
       status: vi.fn().mockResolvedValue({
@@ -44,7 +44,7 @@ vi.mock('simple-git', () => {
   };
 });
 
-import simpleGit from 'simple-git';
+import { simpleGit } from 'simple-git';
 
 describe('GitClient', () => {
   let client: GitClient;

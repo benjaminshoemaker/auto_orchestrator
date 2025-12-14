@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { logger } from '../utils/logger.js';
-import { initProjectDir, projectExists, findProjectRoot } from '../utils/project.js';
+import { initProjectDir, projectExists } from '../utils/project.js';
 import { slugify } from '../utils/templates.js';
 import { DocumentManager } from '../lib/documents.js';
 import { StateManager } from '../lib/state/state-manager.js';

@@ -3,7 +3,7 @@
  * Phase 3: Implementation planning
  */
 
-import { PhaseRunner, PhaseRunnerConfig, PhaseResult } from './phase-runner.js';
+import { PhaseRunner } from './phase-runner.js';
 import type { IdeationContent, SpecificationContent, ImplementationPhase } from '../../types/index.js';
 import type { ConversationHandler } from '../llm/conversation.js';
 import { DependencyResolver } from '../state/dependency-resolver.js';
@@ -66,7 +66,8 @@ export class PlanningPhase extends PhaseRunner<PlanningInput, ImplementationPhas
     let lastResponse = response;
     let phases: ImplementationPhase[] | undefined;
 
-    while (true) {
+    let running = true;
+    while (running) {
       // Get user input
       const userInput = await this.getUserInput();
 
@@ -77,7 +78,8 @@ export class PlanningPhase extends PhaseRunner<PlanningInput, ImplementationPhas
 
       // Check for complete command
       if (userInput.toLowerCase() === '/complete' || userInput.toLowerCase() === '/done') {
-        break;
+        running = false;
+        continue;
       }
 
       // Continue conversation

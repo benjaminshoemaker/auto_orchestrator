@@ -12,36 +12,43 @@ export function isValidTaskResult(obj: unknown): obj is TaskResult {
 
   const result = obj as Record<string, unknown>;
 
-  // Required string fields
-  const requiredStrings = [
-    'task_id',
+  // Required: task_id must be a string
+  if (typeof result['task_id'] !== 'string') return false;
+
+  // Optional string fields - check type if present
+  const optionalStrings = [
     'task_description',
     'started_at',
     'completed_at',
     'summary',
+    'output_summary',
+    'raw_output',
+    'test_output',
+    'failure_reason',
+    'commit_hash',
   ];
-  for (const field of requiredStrings) {
-    if (typeof result[field] !== 'string') return false;
+  for (const field of optionalStrings) {
+    if (result[field] !== undefined && typeof result[field] !== 'string') return false;
   }
 
-  // Status must be 'success' or 'failed'
-  if (result.status !== 'success' && result.status !== 'failed') return false;
+  // Status must be 'complete' or 'failed'
+  if (result.status !== 'complete' && result.status !== 'failed') return false;
 
-  // Required number fields
-  const requiredNumbers = [
-    'duration_seconds',
+  // Optional number fields - check type if present
+  const optionalNumbers = [
+    'duration_ms',
     'tests_added',
     'tests_passing',
     'tests_failing',
     'tokens_used',
     'cost_usd',
   ];
-  for (const field of requiredNumbers) {
-    if (typeof result[field] !== 'number') return false;
+  for (const field of optionalNumbers) {
+    if (result[field] !== undefined && typeof result[field] !== 'number') return false;
   }
 
-  // Required arrays
-  const requiredArrays = [
+  // Optional arrays - check type if present
+  const optionalArrays = [
     'files_created',
     'files_modified',
     'files_deleted',
@@ -49,17 +56,19 @@ export function isValidTaskResult(obj: unknown): obj is TaskResult {
     'assumptions',
     'acceptance_criteria',
   ];
-  for (const field of requiredArrays) {
-    if (!Array.isArray(result[field])) return false;
+  for (const field of optionalArrays) {
+    if (result[field] !== undefined && !Array.isArray(result[field])) return false;
   }
 
-  // Validation must be an object with required fields
-  if (!result.validation || typeof result.validation !== 'object') return false;
-  const validation = result.validation as Record<string, unknown>;
-  if (typeof validation.passed !== 'boolean') return false;
-  if (typeof validation.validator_output !== 'string') return false;
-  if (typeof validation.criteria_checked !== 'number') return false;
-  if (typeof validation.criteria_passed !== 'number') return false;
+  // Validation is optional - but check structure if present
+  if (result.validation !== undefined) {
+    if (typeof result.validation !== 'object') return false;
+    const validation = result.validation as Record<string, unknown>;
+    if (typeof validation.passed !== 'boolean') return false;
+    if (typeof validation.validator_output !== 'string') return false;
+    if (typeof validation.criteria_checked !== 'number') return false;
+    if (typeof validation.criteria_passed !== 'number') return false;
+  }
 
   return true;
 }
@@ -76,7 +85,7 @@ export function createTaskResult(taskId: string, taskDescription: string): TaskR
     status: 'failed', // Must be explicitly set to success
     started_at: now,
     completed_at: now,
-    duration_seconds: 0,
+    duration_ms: 0,
     summary: '',
     files_created: [],
     files_modified: [],
@@ -250,7 +259,7 @@ export class TaskResultManager {
    */
   async getTotalCost(): Promise<number> {
     const results = await this.readAllResults();
-    return results.reduce((sum, result) => sum + result.cost_usd, 0);
+    return results.reduce((sum, result) => sum + (result.cost_usd || 0), 0);
   }
 
   /**
@@ -258,6 +267,6 @@ export class TaskResultManager {
    */
   async getTotalTokens(): Promise<number> {
     const results = await this.readAllResults();
-    return results.reduce((sum, result) => sum + result.tokens_used, 0);
+    return results.reduce((sum, result) => sum + (result.tokens_used || 0), 0);
   }
 }

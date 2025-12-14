@@ -51,27 +51,27 @@ describe('Task Result Manager', () => {
       expect(isValidTaskResult(result)).toBe(false);
     });
 
-    it('should return false for missing required number fields', () => {
+    it('should return false for wrong type number fields', () => {
       const result = createTaskResult('1.1', 'Test');
-      delete (result as Record<string, unknown>).duration_seconds;
+      (result as Record<string, unknown>).duration_ms = 'not a number';
       expect(isValidTaskResult(result)).toBe(false);
     });
 
-    it('should return false for missing required arrays', () => {
+    it('should return false for wrong type arrays', () => {
       const result = createTaskResult('1.1', 'Test');
-      delete (result as Record<string, unknown>).files_created;
-      expect(isValidTaskResult(result)).toBe(false);
-    });
-
-    it('should return false for missing validation object', () => {
-      const result = createTaskResult('1.1', 'Test');
-      delete (result as Record<string, unknown>).validation;
+      (result as Record<string, unknown>).files_created = 'not an array';
       expect(isValidTaskResult(result)).toBe(false);
     });
 
     it('should return false for invalid validation object', () => {
       const result = createTaskResult('1.1', 'Test');
-      (result as Record<string, unknown>).validation = { passed: 'not boolean' };
+      (result as Record<string, unknown>).validation = { passed: 'invalid' };
+      expect(isValidTaskResult(result)).toBe(false);
+    });
+
+    it('should return false for incomplete validation object', () => {
+      const result = createTaskResult('1.1', 'Test');
+      (result as Record<string, unknown>).validation = { passed: true };
       expect(isValidTaskResult(result)).toBe(false);
     });
   });
@@ -114,7 +114,7 @@ describe('Task Result Manager', () => {
     it('should initialize zero counts', () => {
       const result = createTaskResult('1.1', 'Test');
 
-      expect(result.duration_seconds).toBe(0);
+      expect(result.duration_ms).toBe(0);
       expect(result.tests_added).toBe(0);
       expect(result.tests_passing).toBe(0);
       expect(result.tests_failing).toBe(0);
@@ -150,7 +150,7 @@ describe('Task Result Manager', () => {
   describe('writeResult', () => {
     it('should create JSON file', async () => {
       const result = createTaskResult('1.1', 'Test task');
-      result.status = 'success';
+      result.status = 'complete';
 
       await manager.writeResult(result);
 
@@ -164,7 +164,7 @@ describe('Task Result Manager', () => {
 
     it('should write valid JSON', async () => {
       const result = createTaskResult('1.1', 'Test task');
-      result.status = 'success';
+      result.status = 'complete';
       result.summary = 'Task completed successfully';
       result.files_created = ['src/test.ts'];
 
@@ -175,7 +175,7 @@ describe('Task Result Manager', () => {
       const parsed = JSON.parse(content) as TaskResult;
 
       expect(parsed.task_id).toBe('1.1');
-      expect(parsed.status).toBe('success');
+      expect(parsed.status).toBe('complete');
       expect(parsed.summary).toBe('Task completed successfully');
       expect(parsed.files_created).toEqual(['src/test.ts']);
     });
@@ -200,7 +200,7 @@ describe('Task Result Manager', () => {
   describe('readResult', () => {
     it('should read and parse result', async () => {
       const original = createTaskResult('1.1', 'Test task');
-      original.status = 'success';
+      original.status = 'complete';
       original.summary = 'Done';
 
       await manager.writeResult(original);
@@ -209,7 +209,7 @@ describe('Task Result Manager', () => {
 
       expect(result).not.toBeNull();
       expect(result?.task_id).toBe('1.1');
-      expect(result?.status).toBe('success');
+      expect(result?.status).toBe('complete');
       expect(result?.summary).toBe('Done');
     });
 
@@ -363,7 +363,7 @@ describe('Task Result Manager', () => {
     it('should handle full task result lifecycle', async () => {
       // Create result
       const result = createTaskResult('3.2', 'Implement user authentication');
-      result.status = 'success';
+      result.status = 'complete';
       result.summary = 'Added JWT authentication with refresh tokens';
       result.files_created = ['src/auth/jwt.ts', 'src/auth/middleware.ts'];
       result.files_modified = ['src/routes/index.ts'];
@@ -385,7 +385,7 @@ describe('Task Result Manager', () => {
       };
       result.tokens_used = 5000;
       result.cost_usd = 0.025;
-      result.duration_seconds = 180;
+      result.duration_ms = 180000;
 
       // Write
       await manager.writeResult(result);

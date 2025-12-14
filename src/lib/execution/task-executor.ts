@@ -3,8 +3,8 @@
  * Executes individual tasks using Claude Code adapter
  */
 
-import type { Task, TaskResult, TaskStatus } from '../../types/index.js';
-import { ClaudeAdapter, type ClaudeExecutionResult } from './claude-adapter.js';
+import type { Task, TaskResult } from '../../types/index.js';
+import { ClaudeAdapter } from './claude-adapter.js';
 import {
   buildTaskPrompt,
   buildValidationPrompt,
@@ -15,7 +15,6 @@ import {
   parseTaskOutput,
   parseValidationOutput,
   toTaskResult,
-  type ParsedTaskResult,
 } from './result-parser.js';
 import type { GitWorkflowManager } from '../git/workflow-manager.js';
 import * as terminal from '../ui/terminal.js';

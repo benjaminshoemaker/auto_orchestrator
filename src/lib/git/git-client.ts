@@ -3,7 +3,7 @@
  * Wrapper around simple-git for common git operations
  */
 
-import simpleGit, { SimpleGit, StatusResult, LogResult } from 'simple-git';
+import { simpleGit, SimpleGit, StatusResult, LogResult } from 'simple-git';
 
 export interface GitStatus {
   isClean: boolean;

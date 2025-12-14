@@ -214,15 +214,15 @@ export class ClaudeMdManager {
         sections.push(`#### Task ${dep.task_id}: ${dep.task_description}\n`);
         sections.push(`**Summary:** ${dep.summary}\n`);
 
-        if (dep.files_created.length > 0) {
+        if (dep.files_created && dep.files_created.length > 0) {
           sections.push(`**Files created:** ${dep.files_created.join(', ')}\n`);
         }
 
-        if (dep.files_modified.length > 0) {
+        if (dep.files_modified && dep.files_modified.length > 0) {
           sections.push(`**Files modified:** ${dep.files_modified.join(', ')}\n`);
         }
 
-        if (dep.key_decisions.length > 0) {
+        if (dep.key_decisions && dep.key_decisions.length > 0) {
           sections.push('**Key decisions:**');
           for (const decision of dep.key_decisions) {
             sections.push(`- ${decision.decision}: ${decision.rationale}`);

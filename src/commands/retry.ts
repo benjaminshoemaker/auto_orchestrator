@@ -51,7 +51,7 @@ export async function retryCommand(taskId: string, options: RetryOptions): Promi
   }
 
   // Reset task to pending
-  stateManager.retryTask(taskId);
+  await stateManager.retryTask(taskId);
   await stateManager.save();
 
   terminal.printSuccess(`Task ${taskId} reset to pending.`);
