@@ -3,7 +3,7 @@
  * Phase 2: Technical specification
  */
 
-import { PhaseRunner, PhaseRunnerConfig, PhaseResult } from './phase-runner.js';
+import { PhaseRunner } from './phase-runner.js';
 import type { IdeationContent, SpecificationContent } from '../../types/index.js';
 import type { ConversationHandler } from '../llm/conversation.js';
 import * as terminal from '../ui/terminal.js';
@@ -55,7 +55,8 @@ export class SpecPhase extends PhaseRunner<SpecInput, SpecificationContent> {
     let lastResponse = response;
     let partialContent: Partial<SpecificationContent> | undefined;
 
-    while (true) {
+    let running = true;
+    while (running) {
       // Get user input
       const userInput = await this.getUserInput();
 
@@ -66,7 +67,8 @@ export class SpecPhase extends PhaseRunner<SpecInput, SpecificationContent> {
 
       // Check for complete command
       if (userInput.toLowerCase() === '/complete' || userInput.toLowerCase() === '/done') {
-        break;
+        running = false;
+        continue;
       }
 
       // Continue conversation

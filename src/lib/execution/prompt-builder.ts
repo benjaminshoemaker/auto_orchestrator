@@ -3,7 +3,7 @@
  * Constructs prompts for Claude CLI task execution
  */
 
-import type { Task, ImplementationPhase, SpecificationContent } from '../../types/index.js';
+import type { Task, SpecificationContent } from '../../types/index.js';
 
 export interface TaskContext {
   projectName: string;

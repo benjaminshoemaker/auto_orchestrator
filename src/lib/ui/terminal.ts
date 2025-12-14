@@ -16,14 +16,14 @@ import type { TaskStatus } from '../../types/index.js';
  */
 export async function prompt(message: string): Promise<string> {
   try {
-    const { input } = await inquirer.prompt([
+    const result = await inquirer.prompt<{ input: string }>([
       {
         type: 'input',
         name: 'input',
         message: message,
       },
     ]);
-    return input;
+    return result.input;
   } catch (error) {
     // Handle Ctrl+C
     if ((error as Error).message?.includes('User force closed')) {
@@ -38,14 +38,14 @@ export async function prompt(message: string): Promise<string> {
  */
 export async function promptMultiline(message: string): Promise<string> {
   try {
-    const { input } = await inquirer.prompt([
+    const result = await inquirer.prompt<{ input: string }>([
       {
         type: 'editor',
         name: 'input',
         message: message,
       },
     ]);
-    return input;
+    return result.input;
   } catch (error) {
     if ((error as Error).message?.includes('User force closed')) {
       process.exit(0);
@@ -62,7 +62,7 @@ export async function confirm(
   defaultValue: boolean = true
 ): Promise<boolean> {
   try {
-    const { confirmed } = await inquirer.prompt([
+    const result = await inquirer.prompt<{ confirmed: boolean }>([
       {
         type: 'confirm',
         name: 'confirmed',
@@ -70,7 +70,7 @@ export async function confirm(
         default: defaultValue,
       },
     ]);
-    return confirmed;
+    return result.confirmed;
   } catch (error) {
     if ((error as Error).message?.includes('User force closed')) {
       process.exit(0);
@@ -87,7 +87,7 @@ export async function select<T>(
   choices: { name: string; value: T }[]
 ): Promise<T> {
   try {
-    const { selection } = await inquirer.prompt([
+    const result = await inquirer.prompt<{ selection: T }>([
       {
         type: 'list',
         name: 'selection',
@@ -95,7 +95,7 @@ export async function select<T>(
         choices: choices,
       },
     ]);
-    return selection;
+    return result.selection;
   } catch (error) {
     if ((error as Error).message?.includes('User force closed')) {
       process.exit(0);

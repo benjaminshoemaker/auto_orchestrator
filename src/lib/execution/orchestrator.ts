@@ -3,7 +3,7 @@
  * Coordinates the execution of all implementation phases
  */
 
-import type { ImplementationPhase, TaskResult } from '../../types/index.js';
+// Types for documentation (not directly used but part of the module contract)
 import type { StateManager } from '../state/state-manager.js';
 import type { DocumentManager } from '../documents.js';
 import {
@@ -105,8 +105,9 @@ export class Orchestrator extends EventEmitter {
       };
     }
 
+    const firstPhase = phases[0];
     this.emitOrchestratorEvent('orchestration_start', {
-      currentPhase: phases[0].phase_number,
+      currentPhase: firstPhase?.phase_number || 1,
       totalPhases: phases.length,
       phasesCompleted: 0,
     });
@@ -227,8 +228,9 @@ export class Orchestrator extends EventEmitter {
     };
 
     if (success) {
+      const lastPhase = phases[phases.length - 1];
       this.emitOrchestratorEvent('orchestration_complete', {
-        currentPhase: phases[phases.length - 1].phase_number,
+        currentPhase: lastPhase?.phase_number || phasesCompleted,
         totalPhases: phases.length,
         phasesCompleted,
       });

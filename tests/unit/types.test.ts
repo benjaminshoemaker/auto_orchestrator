@@ -88,10 +88,10 @@ describe('Type Definitions', () => {
       const result: TaskResult = {
         task_id: '1.1',
         task_description: 'Test task',
-        status: 'success',
+        status: 'complete',
         started_at: '2024-01-01T00:00:00Z',
         completed_at: '2024-01-01T00:01:00Z',
-        duration_seconds: 60,
+        duration_ms: 60000,
         summary: 'Task completed successfully',
         files_created: ['src/index.ts'],
         files_modified: [],
@@ -112,7 +112,7 @@ describe('Type Definitions', () => {
         cost_usd: 0.01,
       };
 
-      expect(result.status).toBe('success');
+      expect(result.status).toBe('complete');
       expect(result.validation.passed).toBe(true);
     });
 

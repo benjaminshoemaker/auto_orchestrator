@@ -275,14 +275,14 @@ describe('DocumentManager Integration', () => {
 
     it('should save and retrieve task result', async () => {
       const result = createTaskResult('1.1', 'Test task');
-      result.status = 'success';
+      result.status = 'complete';
       result.summary = 'Completed successfully';
 
       await manager.saveTaskResult(result);
 
       const retrieved = await manager.getTaskResult('1.1');
       expect(retrieved?.task_id).toBe('1.1');
-      expect(retrieved?.status).toBe('success');
+      expect(retrieved?.status).toBe('complete');
     });
 
     it('should return null for non-existent result', async () => {
@@ -359,7 +359,7 @@ describe('DocumentManager Integration', () => {
     it('should include dependency results', async () => {
       // Save a dependency result
       const depResult = createTaskResult('1.1', 'Setup project');
-      depResult.status = 'success';
+      depResult.status = 'complete';
       depResult.summary = 'Project scaffolding complete';
       depResult.files_created = ['package.json', 'tsconfig.json'];
       await manager.saveTaskResult(depResult);

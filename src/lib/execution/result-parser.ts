@@ -3,7 +3,7 @@
  * Parses Claude CLI output into structured results
  */
 
-import type { TaskResult, TaskStatus } from '../../types/index.js';
+import type { TaskResult } from '../../types/index.js';
 
 export interface ParsedTaskResult {
   success: boolean;
@@ -87,7 +87,7 @@ export function parseValidationOutput(output: string): ValidationResult {
 
   // Look for Status: PASS/FAIL
   const statusMatch = output.match(/Status:\s*(PASS|FAIL)/i);
-  if (statusMatch) {
+  if (statusMatch && statusMatch[1]) {
     result.passed = statusMatch[1].toUpperCase() === 'PASS';
   }
 
@@ -101,7 +101,7 @@ export function parseValidationOutput(output: string): ValidationResult {
 
   // Extract summary
   const summaryMatch = output.match(/### Summary\s*\n([^#]+)/);
-  if (summaryMatch) {
+  if (summaryMatch && summaryMatch[1]) {
     result.summary = summaryMatch[1].trim();
   }
 
@@ -119,11 +119,11 @@ function extractFilesModified(output: string): FileChange[] {
     /(?:Files Modified|Modified Files)[:\s]*\n((?:[-*]\s+[^\n]+\n?)+)/i
   );
 
-  if (sectionMatch) {
+  if (sectionMatch && sectionMatch[1]) {
     const lines = sectionMatch[1].split('\n');
     for (const line of lines) {
       const fileMatch = line.match(/[-*]\s+([^:]+)(?::\s*(.+))?/);
-      if (fileMatch) {
+      if (fileMatch && fileMatch[1]) {
         files.push({
           path: fileMatch[1].trim(),
           description: fileMatch[2]?.trim() || '',
@@ -134,11 +134,11 @@ function extractFilesModified(output: string): FileChange[] {
 
   // Also look for file paths mentioned elsewhere
   const pathPattern = /(?:created|modified|updated|added)\s+[`']?([a-zA-Z0-9_./-]+\.[a-zA-Z]+)[`']?/gi;
-  let match;
-  while ((match = pathPattern.exec(output)) !== null) {
-    const path = match[1];
-    if (!files.some((f) => f.path === path)) {
-      files.push({ path, description: '' });
+  let pathMatch: RegExpExecArray | null;
+  while ((pathMatch = pathPattern.exec(output)) !== null) {
+    const filePath = pathMatch[1];
+    if (filePath && !files.some((f) => f.path === filePath)) {
+      files.push({ path: filePath, description: '' });
     }
   }
 
@@ -150,13 +150,13 @@ function extractFilesModified(output: string): FileChange[] {
  */
 function extractTestsInfo(output: string): string | undefined {
   const testsMatch = output.match(/### Tests\s*\n([^#]+)/);
-  if (testsMatch) {
+  if (testsMatch && testsMatch[1]) {
     return testsMatch[1].trim();
   }
 
   // Look for test results
   const testResultMatch = output.match(/(\d+)\s+(?:tests?\s+)?pass(?:ed|ing)?/i);
-  if (testResultMatch) {
+  if (testResultMatch && testResultMatch[1]) {
     return `${testResultMatch[1]} tests passing`;
   }
 
@@ -171,27 +171,33 @@ function extractCriteriaStatus(output: string): CriteriaResult[] {
 
   // Look for numbered criteria with PASS/FAIL
   const criteriaPattern = /(\d+)\.\s*\[(PASS|FAIL)\]\s*([^-\n]+)(?:-\s*(.+))?/gi;
-  let match;
+  let match: RegExpExecArray | null;
 
   while ((match = criteriaPattern.exec(output)) !== null) {
-    criteria.push({
-      index: parseInt(match[1], 10),
-      passed: match[2].toUpperCase() === 'PASS',
-      description: match[3].trim(),
-      reason: match[4]?.trim(),
-    });
+    if (match[1] && match[2] && match[3]) {
+      criteria.push({
+        index: parseInt(match[1], 10),
+        passed: match[2].toUpperCase() === 'PASS',
+        description: match[3].trim(),
+        reason: match[4]?.trim(),
+      });
+    }
   }
 
   // Also look for ✓ and ✗ markers
   const checkPattern = /([✓✗])\s*(.+)/g;
   let checkIndex = 1;
-  while ((match = checkPattern.exec(output)) !== null) {
-    if (!criteria.some((c) => c.description.includes(match[2].trim()))) {
-      criteria.push({
-        index: checkIndex++,
-        passed: match[1] === '✓',
-        description: match[2].trim(),
-      });
+  let checkMatch: RegExpExecArray | null;
+  while ((checkMatch = checkPattern.exec(output)) !== null) {
+    if (checkMatch[1] && checkMatch[2]) {
+      const desc = checkMatch[2].trim();
+      if (!criteria.some((c) => c.description.includes(desc))) {
+        criteria.push({
+          index: checkIndex++,
+          passed: checkMatch[1] === '✓',
+          description: desc,
+        });
+      }
     }
   }
 
@@ -204,7 +210,7 @@ function extractCriteriaStatus(output: string): CriteriaResult[] {
 function extractSummary(output: string): string {
   // Look for explicit summary section
   const summaryMatch = output.match(/### Summary\s*\n([^#]+)/);
-  if (summaryMatch) {
+  if (summaryMatch && summaryMatch[1]) {
     return summaryMatch[1].trim();
   }
 
@@ -212,16 +218,16 @@ function extractSummary(output: string): string {
   const completedMatch = output.match(
     /(?:Task|Implementation)\s+(?:is\s+)?(?:complete|completed|done)[.!]?\s*([^\n]+)?/i
   );
-  if (completedMatch) {
+  if (completedMatch && completedMatch[0]) {
     return completedMatch[0].trim();
   }
 
   // Use last paragraph as summary
   const paragraphs = output.split(/\n\n+/).filter((p) => p.trim());
   if (paragraphs.length > 0) {
-    const lastPara = paragraphs[paragraphs.length - 1].trim();
-    if (lastPara.length < 500) {
-      return lastPara;
+    const lastPara = paragraphs[paragraphs.length - 1];
+    if (lastPara && lastPara.trim().length < 500) {
+      return lastPara.trim();
     }
   }
 

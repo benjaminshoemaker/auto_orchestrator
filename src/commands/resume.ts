@@ -1,7 +1,6 @@
 import { findProjectRoot } from '../utils/project.js';
 import { DocumentManager } from '../lib/documents.js';
 import { StateManager } from '../lib/state/state-manager.js';
-import { PhaseManager } from '../lib/state/phase-manager.js';
 import { LLMService } from '../lib/llm/llm-service.js';
 import { IdeationPhase } from '../lib/phases/ideation-phase.js';
 import { SpecPhase } from '../lib/phases/spec-phase.js';
@@ -32,7 +31,6 @@ export async function resumeCommand(options: ResumeOptions): Promise<void> {
   const stateManager = new StateManager(documentManager, projectDir);
   await stateManager.load();
 
-  const phaseManager = new PhaseManager(stateManager);
   const meta = stateManager.getMeta();
   const llmService = new LLMService({});
 

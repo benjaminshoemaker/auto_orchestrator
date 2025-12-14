@@ -79,7 +79,7 @@ describe('StateManager', () => {
     it('should load task results', async () => {
       // Save a task result first
       const result = createTaskResult('1.1', 'Test');
-      result.status = 'success';
+      result.status = 'complete';
       await docManager.saveTaskResult(result);
 
       // Reload state
@@ -87,7 +87,7 @@ describe('StateManager', () => {
 
       const loaded = stateManager.getTaskResult('1.1');
       expect(loaded).not.toBeNull();
-      expect(loaded?.status).toBe('success');
+      expect(loaded?.status).toBe('complete');
     });
   });
 
@@ -357,7 +357,7 @@ describe('StateManager', () => {
     it('should set task to failed', () => {
       const result = createTaskResult('1.1', 'Test');
       result.status = 'failed';
-      result.failure_reason = 'Error';
+      result.output_summary = 'Error';
       stateManager.startTask('1.1');
       stateManager.failTask('1.1', result);
 

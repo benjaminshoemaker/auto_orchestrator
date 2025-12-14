@@ -309,12 +309,12 @@ export class StateManager {
 
     task.status = 'complete';
     task.completed_at = result.completed_at;
-    task.duration_seconds = result.duration_seconds;
+    task.duration_seconds = result.duration_ms ? Math.floor(result.duration_ms / 1000) : undefined;
     task.cost_usd = result.cost_usd;
     task.commit_hash = result.commit_hash;
 
     this.taskResults.set(taskId, result);
-    this.addCost(result.tokens_used, result.cost_usd);
+    this.addCost(result.tokens_used || 0, result.cost_usd || 0);
 
     this.dirty = true;
     this.emit('task_completed', { taskId, result });
@@ -337,15 +337,15 @@ export class StateManager {
 
     task.status = 'failed';
     task.completed_at = result.completed_at;
-    task.duration_seconds = result.duration_seconds;
-    task.failure_reason = result.failure_reason;
+    task.duration_seconds = result.duration_ms ? Math.floor(result.duration_ms / 1000) : undefined;
+    task.failure_reason = result.output_summary;
 
     this.taskResults.set(taskId, result);
-    this.addCost(result.tokens_used, result.cost_usd);
+    this.addCost(result.tokens_used || 0, result.cost_usd || 0);
 
     this.dirty = true;
     this.emit('task_failed', { taskId, result });
-    logger.debug(`Failed task ${taskId}: ${result.failure_reason}`);
+    logger.debug(`Failed task ${taskId}: ${result.output_summary}`);
   }
 
   /**
@@ -363,6 +363,30 @@ export class StateManager {
     this.dirty = true;
     this.emit('task_skipped', { taskId, reason });
     logger.debug(`Skipped task ${taskId}: ${reason}`);
+  }
+
+  /**
+   * Update a task's properties
+   */
+  updateTask(taskId: string, updates: Partial<Task>): void {
+    const task = this.getTask(taskId);
+    if (!task) {
+      throw StateError.taskNotFound(taskId);
+    }
+
+    Object.assign(task, updates);
+    this.dirty = true;
+    logger.debug(`Updated task ${taskId}`);
+  }
+
+  /**
+   * Record a task result
+   */
+  recordTaskResult(result: TaskResult): void {
+    this.taskResults.set(result.task_id, result);
+    this.addCost(result.tokens_used || 0, result.cost_usd || 0);
+    this.dirty = true;
+    logger.debug(`Recorded result for task ${result.task_id}`);
   }
 
   /**

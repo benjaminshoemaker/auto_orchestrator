@@ -104,8 +104,8 @@ export class PhaseExecutor extends EventEmitter {
     terminal.printHeader(`Phase ${phase.phase_number}: ${phase.name}`);
     terminal.printInfo(`${phase.tasks.length} tasks to execute`);
 
-    // Get dependency resolver
-    const resolver = new DependencyResolver(phase.tasks);
+    // Validate tasks have valid dependency structure
+    new DependencyResolver(phase.tasks);
 
     // Execute tasks in dependency order
     const pendingTasks = [...phase.tasks.filter((t) => t.status === 'pending')];
@@ -136,16 +136,19 @@ export class PhaseExecutor extends EventEmitter {
         );
 
         for (let i = 0; i < batch.length; i++) {
+          const batchTask = batch[i];
           const result = batchResults[i];
+          if (!batchTask || !result) continue;
+
           results.push(result);
 
           // Remove from pending
-          const idx = pendingTasks.findIndex((t) => t.id === batch[i].id);
+          const idx = pendingTasks.findIndex((t) => t.id === batchTask.id);
           if (idx >= 0) pendingTasks.splice(idx, 1);
 
           if (result.status === 'complete') {
             completed++;
-            completedIds.add(batch[i].id);
+            completedIds.add(batchTask.id);
           } else {
             failed++;
             if (this.options.stopOnFailure) {
@@ -157,6 +160,8 @@ export class PhaseExecutor extends EventEmitter {
       } else {
         // Execute one task at a time
         const task = readyTasks[0];
+        if (!task) continue;
+
         const result = await this.executeTask(phase, task);
         results.push(result);
 

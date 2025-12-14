@@ -137,27 +137,39 @@ export interface ValidationResult {
 
 export interface TaskResult {
   task_id: string;
-  task_description: string;
-  status: 'success' | 'failed';
-  started_at: string;
-  completed_at: string;
-  duration_seconds: number;
-  summary: string;
-  files_created: string[];
-  files_modified: string[];
-  files_deleted: string[];
-  key_decisions: KeyDecision[];
-  assumptions: string[];
-  tests_added: number;
-  tests_passing: number;
-  tests_failing: number;
+  status: 'complete' | 'failed';
+  // Timing
+  started_at?: string;
+  completed_at?: string;
+  duration_ms?: number;
+  // Content
+  task_description?: string;
+  summary?: string;
+  output_summary?: string;
+  raw_output?: string;
+  // File changes
+  files_created?: string[];
+  files_modified?: string[];
+  files_deleted?: string[];
+  // Test results
+  tests_passed?: boolean;
+  tests_added?: number;
+  tests_passing?: number;
+  tests_failing?: number;
   test_output?: string;
-  acceptance_criteria: AcceptanceCriterionResult[];
-  validation: ValidationResult;
-  tokens_used: number;
-  cost_usd: number;
-  failure_reason?: string;
+  // Decisions & assumptions
+  key_decisions?: KeyDecision[];
+  assumptions?: string[];
+  // Acceptance criteria
+  acceptance_criteria?: AcceptanceCriterionResult[];
+  validation?: ValidationResult;
+  // Cost
+  tokens_used?: number;
+  cost_usd?: number;
+  // Git
   commit_hash?: string;
+  // Error info
+  failure_reason?: string;
 }
 
 // ============================================
