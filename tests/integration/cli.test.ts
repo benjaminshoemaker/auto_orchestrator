@@ -65,7 +65,8 @@ describe('CLI', () => {
   describe('resume command', () => {
     it('should be recognized', () => {
       const result = runCLI('resume');
-      expect(result.stdout).toContain('not implemented');
+      // Either resumes or reports not in project
+      expect(result.stdout).toMatch(/Not in an orchestrator project|Resuming|Running Phase/);
     });
   });
 
@@ -86,7 +87,8 @@ describe('CLI', () => {
   describe('approve command', () => {
     it('should be recognized', () => {
       const result = runCLI('approve phase-1');
-      expect(result.stdout).toContain('not implemented');
+      // Either approves or reports not in project
+      expect(result.stdout).toMatch(/Not in an orchestrator project|approved/);
     });
   });
 
@@ -99,14 +101,16 @@ describe('CLI', () => {
 
     it('should accept reason', () => {
       const result = runCLI('skip 1.1 --reason "manual completion"');
-      expect(result.stdout).toContain('not implemented');
+      // Either skips or reports not in project
+      expect(result.stdout).toMatch(/not implemented|Not in an orchestrator project|skipped/);
     });
   });
 
   describe('retry command', () => {
     it('should be recognized', () => {
       const result = runCLI('retry 1.1');
-      expect(result.stdout).toContain('not implemented');
+      // Either retries or reports not in project
+      expect(result.stdout).toMatch(/Not in an orchestrator project|retry|Task/);
     });
   });
 

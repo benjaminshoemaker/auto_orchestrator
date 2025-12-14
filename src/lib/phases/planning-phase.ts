@@ -4,7 +4,7 @@
  */
 
 import { PhaseRunner, PhaseRunnerConfig, PhaseResult } from './phase-runner.js';
-import type { SpecificationContent, ImplementationPhase } from '../../types/index.js';
+import type { IdeationContent, SpecificationContent, ImplementationPhase } from '../../types/index.js';
 import type { ConversationHandler } from '../llm/conversation.js';
 import { DependencyResolver } from '../state/dependency-resolver.js';
 import * as terminal from '../ui/terminal.js';
@@ -12,9 +12,7 @@ import { isPlanningComplete } from '../llm/prompts/planning.js';
 
 export interface PlanningInput {
   specification: SpecificationContent;
-  ideation?: {
-    use_cases: string[];
-  };
+  ideation?: IdeationContent;
   projectName?: string;
 }
 
