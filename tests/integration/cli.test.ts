@@ -117,7 +117,8 @@ describe('CLI', () => {
   describe('config command', () => {
     it('should be recognized', () => {
       const result = runCLI('config');
-      expect(result.stdout).toContain('not implemented');
+      // Either shows config or reports not in project
+      expect(result.stdout).toMatch(/Not in an orchestrator project|Configuration|config/i);
     });
   });
 

@@ -48,6 +48,31 @@ export class IdeationPhase extends PhaseRunner<IdeationInput, IdeationContent> {
     );
     this.conversation = conversation;
 
+    // In auto-complete mode, drive the conversation automatically
+    if (this.config.autoComplete) {
+      terminal.printInfo('Auto-complete mode: driving conversation automatically');
+
+      // Provide automatic responses to drive the conversation forward
+      const autoResponses = [
+        'Please proceed with reasonable defaults for any questions. The idea description contains the key requirements.',
+        'Use your best judgment for any remaining details. Focus on a minimal viable implementation.',
+        'That sounds good. Please finalize the ideation summary.',
+      ];
+
+      for (const autoResponse of autoResponses) {
+        await llmService.continueIdeation(conversation, autoResponse);
+      }
+
+      const result = await llmService.completeIdeation(conversation);
+      this.cost = result.costUsd;
+
+      if (!isIdeationComplete(result.content)) {
+        throw new Error('Ideation content is incomplete');
+      }
+
+      return result.content;
+    }
+
     // Display initial assistant message
     await this.displayAssistantMessage(response);
 

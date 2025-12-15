@@ -22,6 +22,8 @@ export interface PipelineConfig {
   interactive: boolean;
   gitEnabled?: boolean;
   gitAutoCommit?: boolean;
+  skipImplementation?: boolean;
+  autoComplete?: boolean; // Skip interactive conversation loops in phases
 }
 
 export interface PipelineSummary {
@@ -55,6 +57,8 @@ export class Pipeline {
       interactive: config.interactive,
       gitEnabled: config.gitEnabled ?? true,
       gitAutoCommit: config.gitAutoCommit ?? true,
+      skipImplementation: config.skipImplementation ?? false,
+      autoComplete: config.autoComplete ?? false,
     };
 
     this.documentManager = new DocumentManager(config.projectDir);
@@ -126,13 +130,16 @@ export class Pipeline {
       await this.stateManager.save();
     }
 
-    // Run Implementation
-    terminal.printHeader('Phase 4: Implementation');
-    const impl = await this.runImplementation();
-    if (impl.success) {
-      phasesCompleted.push('implementation');
+    // Run Implementation (unless skipped)
+    let impl = { success: true, tasksCompleted: 0, tasksFailed: 0, totalCost: 0 };
+    if (!this.config.skipImplementation) {
+      terminal.printHeader('Phase 4: Implementation');
+      impl = await this.runImplementation();
+      if (impl.success) {
+        phasesCompleted.push('implementation');
+      }
+      totalCost += impl.totalCost;
     }
-    totalCost += impl.totalCost;
 
     return {
       projectName: this.stateManager.getMeta().project_name,
@@ -282,6 +289,7 @@ export class Pipeline {
         llmService: this.llmService,
         stateManager: this.stateManager,
         documentManager: this.documentManager,
+        autoComplete: this.config.autoComplete,
       });
 
       const result = await runner.run({ idea });
@@ -310,6 +318,7 @@ export class Pipeline {
         llmService: this.llmService,
         stateManager: this.stateManager,
         documentManager: this.documentManager,
+        autoComplete: this.config.autoComplete,
       });
 
       const result = await runner.run({ ideation: doc.ideation });
@@ -338,6 +347,7 @@ export class Pipeline {
         llmService: this.llmService,
         stateManager: this.stateManager,
         documentManager: this.documentManager,
+        autoComplete: this.config.autoComplete,
       });
 
       const result = await runner.run({ specification: doc.specification });

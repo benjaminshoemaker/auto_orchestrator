@@ -172,6 +172,11 @@ Integration tests requiring real API calls must:
 - Be documented as manual verification steps
 - Be run sparingly (costs money)
 
+### E2E test timeouts
+- **Prefer longer timeouts over less complete tests**—it is better for E2E tests to be thorough and take longer than to cut corners to fit within a shorter timeout
+- If a test is timing out, increase the timeout rather than simplifying the test
+- Current convention: 10 minutes for full pipeline tests, 5 minutes for simpler E2E tests
+
 ### Cost awareness
 - Real LLM calls cost money ($3/M input, $15/M output for Sonnet)
 - Track actual costs during manual testing and report in completion checklist

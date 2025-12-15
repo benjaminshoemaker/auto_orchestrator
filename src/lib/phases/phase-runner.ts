@@ -12,6 +12,7 @@ export interface PhaseRunnerConfig {
   llmService: LLMService;
   stateManager: StateManager;
   documentManager: DocumentManager;
+  autoComplete?: boolean; // Skip interactive loop, go straight to summary
 }
 
 export interface PhaseResult<T> {

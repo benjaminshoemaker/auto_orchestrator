@@ -13,8 +13,42 @@ export interface InitOptions {
   name?: string;
 }
 
+/**
+ * Validate project name
+ * Returns error message if invalid, null if valid
+ */
+function validateProjectName(name: string): string | null {
+  // Check length
+  if (name.length < 1) {
+    return 'Project name cannot be empty';
+  }
+  if (name.length > 50) {
+    return 'Project name must be 50 characters or less';
+  }
+
+  // Check for valid characters (alphanumeric, dash, underscore, space)
+  const validPattern = /^[a-zA-Z0-9\s_-]+$/;
+  if (!validPattern.test(name)) {
+    return 'Project name can only contain letters, numbers, spaces, dashes, and underscores';
+  }
+
+  return null;
+}
+
 export async function initCommand(idea: string, options: InitOptions): Promise<void> {
   const projectName = options.name || idea;
+
+  // Validate project name
+  const validationError = validateProjectName(projectName);
+  if (validationError) {
+    terminal.printError(validationError);
+    process.exit(1);
+  }
+
+  // Warn about spaces
+  if (projectName.includes(' ')) {
+    terminal.printWarning('Project name contains spaces. Consider using kebab-case (e.g., "my-project").');
+  }
   // If no --dir specified, create a subdirectory with slugified name
   const projectDir = options.dir
     ? path.resolve(options.dir)
