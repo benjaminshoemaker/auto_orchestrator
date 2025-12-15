@@ -60,6 +60,8 @@ describe('Full Pipeline E2E', () => {
         projectDir: testDir,
         interactive: false,
         gitEnabled: false, // Disable git for E2E tests
+        skipImplementation: true, // Skip implementation - requires Claude CLI
+        autoComplete: true, // Skip interactive conversation loops
       });
 
       // Run just through planning phases (not implementation)
@@ -84,11 +86,11 @@ describe('Full Pipeline E2E', () => {
 
       // Read and verify PROJECT.md has expected content
       const projectMd = await fs.readFile(projectMdPath, 'utf-8');
-      expect(projectMd).toContain('Ideation');
+      expect(projectMd).toContain('Idea Refinement');
       expect(projectMd).toContain('Specification');
       expect(projectMd).toContain('Implementation Phases');
     },
-    300000 // 5 minute timeout
+    600000 // 10 minute timeout - prefer complete tests over fast ones
   );
 
   it(
@@ -126,6 +128,6 @@ describe('Full Pipeline E2E', () => {
 
       expect(pipeline2.getStateManager()).toBeDefined();
     },
-    60000 // 1 minute timeout
+    300000 // 5 minute timeout - prefer complete tests over fast ones
   );
 });

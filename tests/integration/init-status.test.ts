@@ -8,10 +8,16 @@ const CLI_PATH = path.resolve(__dirname, '../../src/index.ts');
 
 function runCLI(args: string, cwd?: string): { stdout: string; stderr: string; exitCode: number } {
   try {
+    // Unset ANTHROPIC_API_KEY to prevent init from trying to run Phase 1
+    // These tests only verify project structure creation, not LLM interactions
+    const env = { ...process.env };
+    delete env.ANTHROPIC_API_KEY;
+
     const stdout = execSync(`npx tsx ${CLI_PATH} ${args}`, {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd,
+      env,
     });
     return { stdout, stderr: '', exitCode: 0 };
   } catch (error: unknown) {

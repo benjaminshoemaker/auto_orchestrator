@@ -67,9 +67,9 @@ export interface LLMServiceOptions {
 }
 
 /**
- * Phase conversation result
+ * Result from an LLM phase conversation
  */
-export interface PhaseResult<T> {
+export interface LLMPhaseResult<T> {
   content: T;
   tokensUsed: number;
   costUsd: number;
@@ -183,7 +183,7 @@ export class LLMService {
    */
   async completeIdeation(
     conversation: ConversationHandler
-  ): Promise<PhaseResult<IdeationContent>> {
+  ): Promise<LLMPhaseResult<IdeationContent>> {
     // Build summary from conversation
     const history = conversation.getHistory();
     const summary = history.map((t) => `${t.role}: ${t.content.slice(0, 200)}...`).join('\n');
@@ -247,7 +247,7 @@ export class LLMService {
   async completeSpecification(
     conversation: ConversationHandler,
     ideation: IdeationContent
-  ): Promise<PhaseResult<SpecificationContent>> {
+  ): Promise<LLMPhaseResult<SpecificationContent>> {
     const history = conversation.getHistory();
     const summary = history.map((t) => `${t.role}: ${t.content.slice(0, 200)}...`).join('\n');
 
@@ -311,7 +311,7 @@ export class LLMService {
   async completePlanning(
     conversation: ConversationHandler,
     specification: SpecificationContent
-  ): Promise<PhaseResult<ImplementationPhase[]>> {
+  ): Promise<LLMPhaseResult<ImplementationPhase[]>> {
     const history = conversation.getHistory();
     const summary = history.map((t) => `${t.role}: ${t.content.slice(0, 200)}...`).join('\n');
 

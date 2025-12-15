@@ -59,6 +59,43 @@ export class PlanningPhase extends PhaseRunner<PlanningInput, ImplementationPhas
     );
     this.conversation = conversation;
 
+    // In auto-complete mode, drive the conversation automatically
+    if (this.config.autoComplete) {
+      terminal.printInfo('Auto-complete mode: driving conversation automatically');
+
+      // Provide automatic responses to drive the conversation forward
+      const autoResponses = [
+        'Please proceed with creating implementation phases. Break down the work into logical phases with clear tasks.',
+        'Use your best judgment for task dependencies and ordering. Keep phases focused and manageable.',
+        'That looks good. Please finalize the implementation plan.',
+      ];
+
+      for (const autoResponse of autoResponses) {
+        await llmService.continuePlanning(conversation, autoResponse);
+      }
+
+      const result = await llmService.completePlanning(conversation, input.specification);
+      this.cost = result.costUsd;
+
+      if (!isPlanningComplete(result.content)) {
+        throw new Error('Planning content is incomplete');
+      }
+
+      // Validate dependencies
+      const allTasks = result.content.flatMap((p) => p.tasks);
+      const resolver = new DependencyResolver(allTasks);
+      const validation = resolver.validate();
+
+      if (!validation.valid) {
+        terminal.printWarning('Dependency issues found:');
+        validation.issues.forEach((issue) => {
+          terminal.printWarning(`  ${issue.taskId}: ${issue.details}`);
+        });
+      }
+
+      return result.content;
+    }
+
     // Display initial assistant message
     await this.displayAssistantMessage(response);
 

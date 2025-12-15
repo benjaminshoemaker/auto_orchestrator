@@ -35,6 +35,7 @@ export interface CompletionOptions {
   temperature?: number;
   systemPrompt?: string;
   stopSequences?: string[];
+  maxRetries?: number;
 }
 
 /**
@@ -81,6 +82,27 @@ export const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
 export const DEFAULT_MAX_TOKENS = 4096;
 
 /**
+ * Default retry settings
+ */
+export const DEFAULT_MAX_RETRIES = 3;
+export const RETRY_DELAYS = [1000, 2000, 4000]; // ms
+
+/**
+ * Truncate string for logging
+ */
+function truncate(str: string, maxLen: number = 200): string {
+  if (str.length <= maxLen) return str;
+  return str.slice(0, maxLen) + '...';
+}
+
+/**
+ * Sleep for given milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * Client for the Anthropic API
  */
 export class AnthropicClient {
@@ -108,72 +130,118 @@ export class AnthropicClient {
   }
 
   /**
-   * Send a single completion request
+   * Send a single completion request with retry logic
    */
   async complete(prompt: string, options: CompletionOptions = {}): Promise<CompletionResponse> {
     const model = options.model || this.model;
     const maxTokens = options.maxTokens || this.maxTokens;
+    const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
 
     logger.debug(`Sending completion request to ${model}`);
+    logger.verbose(`Request prompt: ${truncate(prompt)}`);
 
-    try {
-      const response = await this.client.messages.create({
-        model,
-        max_tokens: maxTokens,
-        temperature: options.temperature,
-        system: options.systemPrompt,
-        stop_sequences: options.stopSequences,
-        messages: [{ role: 'user', content: prompt }],
-      });
+    let lastError: LLMError | null = null;
 
-      const content = this.extractTextContent(response);
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await this.client.messages.create({
+          model,
+          max_tokens: maxTokens,
+          temperature: options.temperature,
+          system: options.systemPrompt,
+          stop_sequences: options.stopSequences,
+          messages: [{ role: 'user', content: prompt }],
+        });
 
-      return {
-        content,
-        model: response.model,
-        stopReason: response.stop_reason,
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
-      };
-    } catch (error) {
-      throw this.wrapApiError(error);
+        const content = this.extractTextContent(response);
+        const cost = this.calculateCost(response.usage.input_tokens, response.usage.output_tokens, model);
+
+        logger.verbose(`Response: ${truncate(content)}`);
+        logger.verbose(`Tokens: ${response.usage.input_tokens} in / ${response.usage.output_tokens} out, Cost: $${cost.toFixed(4)}`);
+
+        return {
+          content,
+          model: response.model,
+          stopReason: response.stop_reason,
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+        };
+      } catch (error) {
+        lastError = this.wrapApiError(error);
+
+        // Only retry on rate limit errors
+        if (lastError.code === 'RATE_LIMITED' && attempt < maxRetries) {
+          const delay = RETRY_DELAYS[attempt] || 4000;
+          logger.warn(`Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await sleep(delay);
+          continue;
+        }
+
+        throw lastError;
+      }
     }
+
+    throw lastError || new LLMError('Unknown error');
   }
 
   /**
-   * Send a multi-turn chat request
+   * Send a multi-turn chat request with retry logic
    */
   async chat(messages: Message[], options: CompletionOptions = {}): Promise<CompletionResponse> {
     const model = options.model || this.model;
     const maxTokens = options.maxTokens || this.maxTokens;
+    const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
 
     logger.debug(`Sending chat request to ${model} with ${messages.length} messages`);
-
-    try {
-      const response = await this.client.messages.create({
-        model,
-        max_tokens: maxTokens,
-        temperature: options.temperature,
-        system: options.systemPrompt,
-        stop_sequences: options.stopSequences,
-        messages: messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-      });
-
-      const content = this.extractTextContent(response);
-
-      return {
-        content,
-        model: response.model,
-        stopReason: response.stop_reason,
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
-      };
-    } catch (error) {
-      throw this.wrapApiError(error);
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage) {
+      logger.verbose(`Last message: ${truncate(lastMessage.content)}`);
     }
+
+    let lastError: LLMError | null = null;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await this.client.messages.create({
+          model,
+          max_tokens: maxTokens,
+          temperature: options.temperature,
+          system: options.systemPrompt,
+          stop_sequences: options.stopSequences,
+          messages: messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        });
+
+        const content = this.extractTextContent(response);
+        const cost = this.calculateCost(response.usage.input_tokens, response.usage.output_tokens, model);
+
+        logger.verbose(`Response: ${truncate(content)}`);
+        logger.verbose(`Tokens: ${response.usage.input_tokens} in / ${response.usage.output_tokens} out, Cost: $${cost.toFixed(4)}`);
+
+        return {
+          content,
+          model: response.model,
+          stopReason: response.stop_reason,
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+        };
+      } catch (error) {
+        lastError = this.wrapApiError(error);
+
+        if (lastError.code === 'RATE_LIMITED' && attempt < maxRetries) {
+          const delay = RETRY_DELAYS[attempt] || 4000;
+          logger.warn(`Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await sleep(delay);
+          continue;
+        }
+
+        throw lastError;
+      }
+    }
+
+    throw lastError || new LLMError('Unknown error');
   }
 
   /**

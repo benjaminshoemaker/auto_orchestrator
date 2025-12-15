@@ -48,6 +48,31 @@ export class SpecPhase extends PhaseRunner<SpecInput, SpecificationContent> {
     );
     this.conversation = conversation;
 
+    // In auto-complete mode, drive the conversation automatically
+    if (this.config.autoComplete) {
+      terminal.printInfo('Auto-complete mode: driving conversation automatically');
+
+      // Provide automatic responses to drive the conversation forward
+      const autoResponses = [
+        'Please proceed with reasonable defaults for the architecture and tech stack. Keep it simple and practical.',
+        'Use your best judgment for data models and API design. Focus on what is needed for the core use cases.',
+        'That looks good. Please finalize the specification.',
+      ];
+
+      for (const autoResponse of autoResponses) {
+        await llmService.continueSpecification(conversation, autoResponse);
+      }
+
+      const result = await llmService.completeSpecification(conversation, input.ideation);
+      this.cost = result.costUsd;
+
+      if (!isSpecificationComplete(result.content)) {
+        throw new Error('Specification content is incomplete');
+      }
+
+      return result.content;
+    }
+
     // Display initial assistant message
     await this.displayAssistantMessage(response);
 
