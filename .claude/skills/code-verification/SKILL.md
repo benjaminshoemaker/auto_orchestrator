@@ -9,15 +9,17 @@ Verify code against requirements using a main agent / sub-agent loop with struct
 
 ## Workflow Overview
 
+Copy this checklist and track progress:
+
 ```
-1. Parse verification instructions into testable items
-2. For each instruction:
-   a. Pre-flight: Confirm instruction is testable
-   b. Sub-agent: Verify if instruction is met
-   c. If failed: Main agent attempts fix
-   d. Repeat b-c up to 5 times or until success
-   e. Update checklist with result
-3. Generate verification report
+Code Verification Progress:
+- [ ] Step 1: Parse verification instructions
+- [ ] Step 2: Pre-flight validation
+- [ ] Step 3: Verification loop (per instruction)
+- [ ] Step 4: Fix attempts (if failed)
+- [ ] Step 5: Update checklist with results
+- [ ] Step 6: Generate verification report
+- [ ] Step 7: Log results to verification-log.jsonl
 ```
 
 ## Step 1: Parse Verification Instructions
@@ -28,6 +30,16 @@ Extract each verification instruction into a discrete, testable item:
 - **Instruction**: The requirement text
 - **Test approach**: How to verify (file inspection, run tests, lint, type check, etc.)
 - **Files involved**: Which files to examine
+- **Requires Browser**: Whether the instruction needs Playwright MCP verification
+  - Auto-detect from keywords: UI, render, display, visible, hidden, show, hide, click, hover, focus, blur, scroll, DOM, element, component, layout, responsive, style, CSS, color, font, screenshot, visual, appearance, console, error, warning, log, network, request, response, accessibility, a11y, ARIA, animation, transition, loading, performance
+  - Mark as: `browser: true` or `browser: false`
+- **Browser Verification Type** (if `browser: true`):
+  - `DOM_INSPECTION` - Element presence, visibility, content via accessibility tree snapshots
+  - `SCREENSHOT` - Visual appearance, layout verification
+  - `CONSOLE` - Browser console errors, warnings, logs
+  - `NETWORK` - API requests, responses, status codes (via network interception)
+  - `PERFORMANCE` - Load times, Core Web Vitals (via tracing)
+  - `ACCESSIBILITY` - ARIA attributes, semantic HTML, accessibility tree analysis
 
 ## Step 2: Pre-flight Validation
 
@@ -38,6 +50,85 @@ Before the verification loop, confirm each instruction is testable:
 - Required files/resources exist
 
 Flag untestable instructions immediately rather than attempting verification.
+
+### Browser-Specific Pre-Flight
+
+For instructions with `browser: true`:
+
+1. **HTTP-First Check (before browser tools)**
+
+   Many "browser" criteria can be satisfied with a simple HTTP check. Before
+   launching browser tools, evaluate if the criterion only requires:
+   - Page accessibility (HTTP 200 status)
+   - API response validation
+   - Redirect verification
+   - Basic content presence
+
+   **Attempt HTTP verification first using curl:**
+   ```bash
+   # Page loads check
+   curl -sf "{devServer.url}{route}" -o /dev/null && echo "PASS" || echo "FAIL"
+
+   # Response contains text
+   curl -s "{url}" | grep -q "{expected}" && echo "PASS" || echo "FAIL"
+
+   # API returns expected status
+   curl -sf -o /dev/null -w "%{http_code}" "{url}"
+   ```
+
+   **If HTTP check passes AND criterion does NOT explicitly require:**
+   - DOM element inspection (selector, visibility)
+   - Visual appearance verification
+   - User interaction simulation
+   - Console log inspection
+   - Network timing/performance
+
+   **Then:** Mark as PASS (HTTP-first), skip browser verification.
+
+   **Otherwise:** Continue to browser tool fallback chain.
+
+2. **Check browser tool availability (fallback chain)**
+   - Try tools in order: ExecuteAutomation Playwright → Browser MCP → Microsoft Playwright → Chrome DevTools
+   - Use first available tool for browser verification
+
+   **If NO tools available (SOFT BLOCK):**
+
+   Before marking as BLOCKED, attempt HTTP fallback for any remaining criteria.
+   **EXECUTE these commands** via Bash tool (substitute actual URLs):
+   - Page loading: `curl -sf {url}`
+   - API responses: `curl -s {url} | jq .`
+   - Redirects: `curl -sI {url}`
+
+   Only mark as BLOCKED if both browser tools AND HTTP fallback are insufficient.
+
+   If still blocked after HTTP fallback:
+   - Display warning:
+     ```
+     ⚠️  NO BROWSER TOOLS AVAILABLE
+
+     This verification includes browser-based criteria but no browser
+     MCP tools are available, and HTTP fallback is insufficient.
+
+     Criteria requiring DOM/visual inspection:
+     - {list criteria that truly need browser}
+
+     Options:
+     1. Continue anyway (these criteria become manual verification)
+     2. Stop and configure browser tools first
+     ```
+   - Use AskUserQuestion to let user choose:
+     - "Continue with manual verification" → Mark browser instructions as BLOCKED, continue with non-browser criteria
+     - "Stop to configure tools" → Halt verification, provide setup instructions
+
+2. **Verify dev server is running** (if browser tools available)
+   - Check if configured dev server URL responds (e.g., `http://localhost:3000`)
+   - If not running, attempt to start using the configured dev server command
+   - Wait for configured startup time before proceeding
+   - If unable to start, mark as BLOCKED: "Dev server not accessible at {URL}"
+
+3. **Confirm target route exists** (if browser tools available)
+   - Navigate to the page specified in the instruction using the selected browser tool
+   - If 404 or error, mark as BLOCKED: "Target route not found: {route}"
 
 ## Step 3: Sub-Agent Verification Protocol
 
@@ -60,6 +151,42 @@ Sub-agent rules:
 - Do not attempt fixes—report findings only
 - Be precise about location (file, line number, function name)
 - Distinguish between blocking failures and minor issues
+
+### Browser-Enhanced Verification Output
+
+For instructions with `browser: true`, the sub-agent MUST use Playwright MCP and return:
+
+```
+BROWSER VERIFICATION RESULT
+---------------------------
+Instruction ID: [ID]
+Status: PASS | FAIL | BLOCKED
+Type: DOM | VISUAL | CONSOLE | NETWORK | PERFORMANCE | ACCESSIBILITY
+URL: [URL] | Viewport: [width]x[height]
+
+Finding: [What was observed]
+Expected: [What was expected]
+
+Details: [Type-specific information]
+  - DOM: selector, found, visible, content
+  - Visual: screenshot path, description
+  - Console: errors, warnings, logs
+  - Network: endpoint, method, status, response summary
+  - Performance: load time, LCP, FID, CLS
+  - Accessibility: ARIA, semantic HTML, contrast, keyboard nav
+
+Suggested Fix: [Specific fix recommendation]
+```
+
+#### Browser Sub-Agent Rules
+
+In addition to standard sub-agent rules, browser verification sub-agents MUST:
+- Start with an accessibility tree snapshot (`browser_snapshot`) of the initial state
+- Use stable selectors (prefer `data-testid` over complex CSS paths, or use accessibility tree element refs)
+- Wait for dynamic content to load before inspecting (`browser_wait_for_text` or `browser_wait`)
+- Capture console output before and after actions
+- Take screenshots (`browser_screenshot`) when verifying visual appearance
+- Test at default viewport unless criterion specifies responsive/mobile (use `browser_resize` to change)
 
 ## Step 4: Main Agent Fix Protocol
 
@@ -90,6 +217,17 @@ Attempt 2: [Description of change] → [Result]
 
 If the same failure pattern repeats twice, explicitly try a different strategy.
 
+### Browser-Specific Fix Strategies
+
+| Failure Type | Common Fixes |
+|--------------|--------------|
+| **DOM/Visibility** | Conditional rendering, CSS display/visibility, z-index, prop passing |
+| **Console errors** | JS exceptions, missing mocks, env vars, CORS |
+| **Network** | Endpoint URLs, auth headers, payload format, CORS config |
+| **Visual** | CSS cascade, responsive breakpoints, font loading |
+| **Performance** | Bundle size, image optimization, lazy loading, render-blocking |
+| **Accessibility** | ARIA attributes, color contrast, heading hierarchy, keyboard handlers |
+
 ## Step 5: Exit Conditions
 
 Exit the verification loop when ANY condition is met:
@@ -110,6 +248,10 @@ After each fix attempt, verify:
 - Any previously-passing related instructions (regression check)
 
 If a fix breaks something else, revert and note the conflict.
+
+### Browser Regression Checks
+
+After each browser-related fix, verify no regressions in: console errors, visual appearance, performance metrics, accessibility. If regression detected, capture before/after state and log in fix history.
 
 ## Step 7: Generate Verification Report
 
@@ -140,6 +282,17 @@ AUDIT TRAIL
 [Timestamp] V-002: Attempt 1 - Changed X → FAIL
 [Timestamp] V-002: Attempt 2 - Changed Y → FAIL
 ...
+
+BROWSER VERIFICATION (if applicable)
+------------------------------------
+Browser Checks: [passed]/[total] | Blocked: [N]
+Playwright: Available | Unavailable
+Dev Server: [URL] | Not Running
+
+Issues Found:
+- [V-XXX] {type}: {description}
+
+Screenshots: [list of captured files]
 ```
 
 ## Example
