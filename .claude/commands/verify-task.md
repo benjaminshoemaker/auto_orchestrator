@@ -1,6 +1,5 @@
 ---
-name: verify-task
-description: Run code-verification on a specific task. Use to verify a single task's acceptance criteria after implementation.
+description: Run code-verification on a specific task
 argument-hint: [task-id]
 allowed-tools: Read, Edit, Bash, Grep, Glob, AskUserQuestion
 ---
@@ -36,19 +35,6 @@ If the config is missing or required commands are empty:
 - Note the missing config in the report if verification cannot proceed
 
 ## Verification Workflow
-
-Copy this checklist and track progress:
-
-```
-Verify Task Progress:
-- [ ] Step 1: Parse criteria from task
-- [ ] Step 2: Pre-flight check (testability)
-- [ ] Step 3: TDD compliance check
-- [ ] Step 4: Verify each criterion
-- [ ] Step 5: Handle exit conditions
-- [ ] Step 6: Generate report
-- [ ] Step 7: Log to verification-log.jsonl
-```
 
 Follow the code-verification workflow (inline, no sub-agents):
 
@@ -107,12 +93,7 @@ If any criteria are type `BROWSER:*`:
      - "Continue with manual verification" → Mark browser criteria as MANUAL, proceed
      - "Stop to configure tools" → Halt verification, provide setup instructions
 
----
-
-### Step 3: TDD Compliance Check (Separate from Verification)
-
-> This step evaluates development process quality, not functional correctness.
-> TDD failures are informational — they don't block task completion.
+### Step 3: TDD Compliance Check
 
 Verify that Test-Driven Development was followed:
 
@@ -149,12 +130,6 @@ Issues:
 ```
 
 If tests are missing for any criterion, stop and write tests before proceeding.
-
-**If test runner is unavailable or not configured:**
-- Check `verification-config.json` for `testCommand`
-- If no test command: report "No test runner configured — TDD compliance cannot be assessed"
-- Mark TDD check as SKIPPED (not FAIL)
-- Suggest: Run `/configure-verification` to set up test commands
 
 ### Step 4: Verify Each Criterion
 
@@ -271,11 +246,6 @@ Ensure `.claude/verification/` exists before writing evidence files.
     }
   }
   ```
-- **Verify state update:** Read back the updated entry to confirm the write succeeded:
-  ```bash
-  jq ".tasks[\"$1\"].status" .claude/phase-state.json
-  ```
-  If the read-back doesn't show `"COMPLETE"`, report the write failure and retry once.
 - Write an evidence report to `.claude/verification/task-$1.md`
 - Append a record to `.claude/verification-log.jsonl`
 - Report: Task $1 verified, all criteria met
